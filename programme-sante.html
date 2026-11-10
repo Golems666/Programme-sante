@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon programme santé</title>
+<style>
+:root{--bg:#0b1020;--card:#141b34;--card2:#1b2447;--tx:#eef1ff;--mu:#9aa6d1;--ac:#7c5cff;--ac2:#e5408f;--ok:#2fd18b;--wa:#ffb84d;--ko:#ff5d73;--bd:#2a3563}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:70px}
+header{padding:16px;background:linear-gradient(135deg,#1b1f4d,#3a1b4d);border-bottom:1px solid var(--bd)}
+header h1{margin:0;font-size:1.3rem}
+header p{margin:4px 0 0;color:var(--mu);font-size:.85rem}
+nav{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:8px;background:#0b1020ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--bd)}
+nav button{flex:0 0 auto;background:var(--card);color:var(--mu);border:1px solid var(--bd);padding:9px 14px;border-radius:20px;font-size:.9rem;cursor:pointer}
+nav button.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border-color:transparent}
+main{max-width:860px;margin:0 auto;padding:12px}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:12px 0}
+.card h2{margin:0 0 8px;font-size:1.1rem}
+.card h3{margin:12px 0 4px;font-size:1rem;color:#c9d2ff}
+.note{color:var(--mu);font-size:.85rem}
+label{display:block;margin:10px 0 4px;color:var(--mu);font-size:.85rem}
+input,select,textarea{width:100%;background:var(--card2);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:1rem}
+input[type=checkbox]{width:auto;accent-color:var(--ac2);transform:scale(1.3);margin-right:10px}
+.chk{display:flex;align-items:center;padding:7px 0;color:var(--tx);font-size:.95rem;margin:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--card2);border:1px solid var(--bd);border-radius:14px;padding:12px;text-align:center}
+.kpi b{display:block;font-size:1.5rem;color:#b7a6ff}
+.kpi span{font-size:.7rem;color:var(--mu);letter-spacing:.05em;text-transform:uppercase}
+.btn{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border:0;border-radius:12px;padding:11px 16px;font-size:.95rem;cursor:pointer;margin:4px 4px 4px 0}
+.btn.sec{background:var(--card2);border:1px solid var(--bd);color:var(--tx)}
+.alert{border-left:4px solid var(--wa);background:#2a2415;padding:10px 12px;border-radius:8px;margin:8px 0;font-size:.9rem}
+.alert.red{border-color:var(--ko);background:#2a1519}
+.alert.green{border-color:var(--ok);background:#12281f}
+.pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.78rem}
+.pill.ok{background:#12351f;color:var(--ok)}.pill.lo{background:#3a2c10;color:var(--wa)}.pill.hi{background:#3a1519;color:var(--ko)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+td,th{padding:7px 4px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+details{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:8px 12px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+.meal{padding:8px 0;border-bottom:1px dashed var(--bd)}
+.meal:last-child{border:0}
+.meal small{color:var(--mu)}
+.f{}body.male .f{display:none}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.bil{display:grid;grid-template-columns:1.4fr 1fr auto;gap:8px;align-items:center;margin:8px 0}
+.shop label.chk{padding:6px 0;border-bottom:1px solid var(--bd)}
+.shop .done{opacity:.4;text-decoration:line-through}
+th{color:var(--mu);font-weight:600;font-size:.8rem}
+ul{padding-left:20px;margin:6px 0}
+svg text{fill:var(--mu);font-size:10px}
+@media print{nav,.btn,.noprint{display:none!important}.tab{display:block!important}body{background:#fff;color:#000}.card,details,.kpi{background:#fff;border-color:#bbb;color:#000}.note,label{color:#444}.kpi b{color:#000}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌸 Mon programme santé</h1>
+  <p>Profil → Analyses → Programme · données enregistrées dans ce navigateur</p>
+</header>
+<nav id="nav"></nav>
+<main>
+
+<!-- ============ PROFIL ============ -->
+<section class="tab" id="t-profil">
+  <div class="card noprint">
+    <h2>💾 Sauvegarde</h2>
+    <p class="note">Vos données restent dans ce navigateur. Pour plus de sécurité, enregistrez-les aussi dans un fichier.</p>
+    <button class="btn" onclick="exportData()">Créer mon fichier</button>
+    <button class="btn sec" onclick="document.getElementById('imp').click()">Ouvrir un fichier</button>
+    <input type="file" id="imp" accept=".json" hidden onchange="importData(event)">
+    <button class="btn sec" onclick="if(confirm('Tout effacer ?')){localStorage.removeItem(KEY);location.reload()}">Réinitialiser</button>
+    <p class="note" id="savemsg"></p>
+  </div>
+
+  <div class="card" id="moi">
+    <h2>👤 Moi</h2>
+    <div class="grid">
+      <div><label>Prénom</label><input data-k="prenom" type="text"></div>
+      <div><label>Âge</label><input data-k="age" type="number" min="14" max="99"></div>
+      <div><label>Sexe</label><select data-k="sexe"><option value="F">Femme</option><option value="H">Homme</option></select></div>
+      <div><label>Taille (cm)</label><input data-k="taille" type="number"></div>
+      <div><label>Poids (kg)</label><input data-k="poids" type="number" step="0.1"></div>
+      <div><label>Masse grasse (%) facultatif</label><input data-k="mg" type="number" step="0.1"></div>
+      <div><label>Tour de taille (cm)</label><input data-k="tour" type="number"></div>
+      <div><label>Pouls au repos (bpm)</label><input data-k="fc" type="number"></div>
+      <div><label>Tension systolique</label><input data-k="sys" type="number"></div>
+      <div><label>Tension diastolique</label><input data-k="dia" type="number"></div>
+    </div>
+    <label>Mon objectif</label>
+    <select data-k="objectif">
+      <option value="perte">Perdre du poids (masse grasse)</option>
+      <option value="maintien">Maintenir mon poids</option>
+      <option value="muscle">Prendre du muscle</option>
+    </select>
+    <label>Activité physique</label>
+    <select data-k="activite">
+      <option value="1.2">Sédentaire (peu ou pas de sport)</option>
+      <option value="1.375">Légère (1 à 2 séances/semaine)</option>
+      <option value="1.55">Modérée (3 à 4 séances/semaine)</option>
+      <option value="1.725">Intense (5 séances ou + /semaine)</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>🩺 Ma santé</h2>
+    <p class="note">Ces informations servent à écarter les compléments qui ne vous conviennent pas (interactions, contre-indications).</p>
+    <div id="conds"></div>
+    <div id="glp1box" style="display:none">
+      <label>Molécule GLP-1</label>
+      <select data-k="glp1mol">
+        <option value="">Choisir…</option>
+        <option>Sémaglutide (Ozempic, Wegovy, Rybelsus)</option>
+        <option>Tirzépatide (Mounjaro)</option>
+        <option>Liraglutide (Saxenda, Victoza)</option>
+        <option>Dulaglutide (Trulicity)</option>
+        <option>Autre / je ne sais pas</option>
+      </select>
+      <label>Date de début du traitement</label>
+      <input data-k="glp1date" type="date">
+      <label>Jour d'injection habituel</label>
+      <select data-k="glp1jour"><option value="">–</option><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option><option>Samedi</option><option>Dimanche</option></select>
+      <label>Dose actuelle (telle qu'indiquée sur l'ordonnance)</label>
+      <input data-k="glp1dose" type="text" placeholder="Pour mon suivi uniquement">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💊 Mes médicaments</h2>
+    <p class="note">Sert à vérifier les interactions avec les compléments et à adapter les alertes.</p>
+    <div id="meds"></div>
+  </div>
+
+  <div class="card">
+    <h2>🍽️ Mon alimentation</h2>
+    <label>Régime</label>
+    <select data-k="regime"><option value="tout">Je mange de tout</option><option value="pesco">Pescétarien (poisson, pas de viande)</option><option value="vege">Végétarien</option></select>
+    <label>Repas par jour</label>
+    <select data-k="repas"><option value="3">3 repas</option><option value="3+1">3 repas + 1 collation</option><option value="3+2">3 repas + 2 collations (petits repas)</option></select>
+    <label>Poisson gras (saumon, sardine, maquereau…)</label>
+    <select data-k="poisson"><option value="0">Jamais</option><option value="1">1 fois par semaine</option><option value="2">2 fois par semaine</option><option value="3">3 fois par semaine</option></select>
+    <label>Laitages (lait, yaourt, fromage)</label>
+    <select data-k="laitages"><option value="jamais">Rarement ou jamais</option><option value="parfois">Parfois</option><option value="souvent">Tous les jours</option></select>
+    <label class="chk"><input type="checkbox" data-k="sanslactose">Sans lactose</label>
+    <label class="chk"><input type="checkbox" data-k="sansgluten">Sans gluten</label>
+    <h3>🛒 Courses et recettes</h3>
+    <label>Personnes au foyer (courses et recettes)</label>
+    <input data-k="foyer" type="number" min="1" max="10">
+    <label>Temps de cuisine maximum par recette</label>
+    <select data-k="temps"><option value="0">Pas de limite</option><option value="15">15 min</option><option value="30">30 min</option></select>
+    <label class="chk"><input type="checkbox" data-k="budget">Petit budget</label>
+    <label class="chk"><input type="checkbox" data-k="batch">Batch cooking (je cuisine pour 2 jours)</label>
+    <label>Aliments que je ne mange pas (séparés par des virgules)</label>
+    <input data-k="exclus" type="text" placeholder="Ex : poisson, brocoli, champignons">
+  </div>
+
+  <div class="card">
+    <h2>🌸 Ce que je ressens en ce moment</h2>
+    <div id="syms"></div>
+  </div>
+</section>
+
+<!-- ============ ANALYSES ============ -->
+<section class="tab" id="t-analyses">
+  <div class="card">
+    <h2>🩸 Mes analyses de sang</h2>
+    <p class="note">Saisissez les résultats de votre dernier bilan : vos compléments et vos menus s'ajustent. Laissez vides les valeurs que vous n'avez pas. Unités fixes indiquées ci-dessous (vérifiez celles de votre laboratoire).</p>
+    <label>Date du bilan</label>
+    <input type="date" id="bdate">
+    <div id="bilform"></div>
+    <button class="btn" onclick="saveBilan()">Enregistrer ce bilan</button>
+    <button class="btn sec" onclick="newBilan()">Nouveau bilan</button>
+  </div>
+  <div class="card noprint">
+    <h2>⬇️⬆️ Télécharger / ajouter des analyses</h2>
+    <p class="note">Téléchargez vos analyses pour les garder ou les envoyer à votre médecin ; réimportez-les ensuite (ou ajoutez de nouveaux bilans remplis dans un tableur) : elles rejoignent vos données, sans doublon pour une même date.</p>
+    <button class="btn" onclick="dlBilans('csv')">⬇️ Télécharger (CSV, Excel)</button>
+    <button class="btn sec" onclick="dlBilans('json')">⬇️ Télécharger (JSON)</button>
+    <button class="btn sec" onclick="dlTemplate()">📄 Modèle vide à remplir</button>
+    <button class="btn" onclick="document.getElementById('impb').click()">⬆️ Ajouter des analyses (fichier)</button>
+    <input type="file" id="impb" accept=".csv,.json,.txt" hidden onchange="importBilans(event)">
+    <p class="note" id="impmsg"></p>
+  </div>
+  <div class="card">
+    <h2>🎯 À doser selon mon profil</h2>
+    <p class="note">Suggestions à discuter avec votre médecin ; ✔ = présent dans votre dernier bilan.</p>
+    <div id="bilsug"></div>
+  </div>
+  <div class="card">
+    <h2>🗂️ Mes bilans enregistrés</h2>
+    <div id="bilans"></div>
+  </div>
+</section>
+
+<!-- ============ PROGRAMME ============ -->
+<section class="tab" id="t-programme">
+  <div class="card" id="prog-head"></div>
+  <div id="prog"></div>
+  <div class="card noprint">
+    <h2>💊 Ajouter ce que je prends déjà</h2>
+    <p class="note">Même un produit absent de la liste : les interactions avec votre profil sont vérifiées.</p>
+    <div class="grid">
+      <input id="cn" placeholder="Nom du complément">
+      <input id="cd" placeholder="Dose (ex : 1 gélule)">
+    </div>
+    <div class="grid" style="margin-top:8px">
+      <input id="cm" placeholder="Moment (ex : petit-déj)">
+      <button class="btn" onclick="addCompl()">Ajouter</button>
+    </div>
+    <div id="myc"></div>
+    <button class="btn sec" onclick="window.print()">⬇️ PDF de mon programme</button>
+  </div>
+</section>
+
+<!-- ============ MENUS ============ -->
+<section class="tab" id="t-menus">
+  <div class="card noprint">
+    <h2>🥗 Ma semaine et mes courses</h2>
+    <p class="note">Ouvrez un jour pour voir les grammes ; le bouton ⇄ remplace un repas ; la liste de courses se recalcule.</p>
+    <button class="btn" onclick="newWeek()">✨ Nouvelle semaine</button>
+  </div>
+  <div id="week"></div>
+  <div class="card shop" id="shop"></div>
+  <div class="card">
+    <h2>🔄 Mes menus selon mon ressenti</h2>
+    <p class="note">Notez dans l'onglet Suivi votre faim, votre satiété, votre digestion : après 3 jours au moins, des ajustements sont proposés ici.</p>
+    <div id="feel"></div>
+  </div>
+  <div id="glp1menu"></div>
+  <div class="card noprint">
+    <h2>🍎 Tous les aliments <span class="note" id="fcount"></span></h2>
+    <input id="fsearch" placeholder="Rechercher un aliment ou une catégorie…" oninput="renderFoods()">
+    <div id="fres" style="max-height:260px;overflow:auto;margin-top:8px"></div>
+    <p class="note">Valeurs pour 100 g (kcal, protéines en g, prix indicatif en €/kg).</p>
+    <h3>Calculateur</h3>
+    <div class="grid"><select id="csel" onchange="calcFood()"></select><input id="cg" type="number" value="100" oninput="calcFood()"></div>
+    <p><b id="cout"></b></p>
+    <h3>Ajouter un aliment personnel</h3>
+    <div class="grid">
+      <input id="fn" placeholder="Nom"><input id="fk" type="number" placeholder="kcal / 100 g">
+      <input id="fp" type="number" placeholder="Protéines / 100 g"><input id="fpr" type="number" placeholder="Prix €/kg (facultatif)">
+    </div>
+    <button class="btn" onclick="addFood()">Ajouter</button>
+  </div>
+  <div class="card">
+    <h2>🥬 Mis en avant : aliments riches en magnésium</h2>
+    <p class="note">Amandes, épinards, flocons d'avoine, lentilles, pois chiches, quinoa, chocolat noir (≥70 %), banane, avocat.</p>
+  </div>
+</section>
+
+<!-- ============ PEPTIDES ============ -->
+<section class="tab" id="t-peptides">
+  <div class="card">
+    <h2>🧬 Peptides : repères</h2>
+    <div class="alert red">Informations éducatives uniquement : aucune dose ni aucun protocole n'est donné ici. Seul un médecin prescrit un médicament. Les produits « de recherche » ne sont pas autorisés comme médicaments chez l'humain.</div>
+    <p class="note">Un peptide est une courte chaîne d'acides aminés. Certains sont des médicaments éprouvés (GLP-1, insuline) ; beaucoup d'autres, vendus en ligne, n'ont jamais démontré leur sécurité ni leur efficacité chez l'humain.</p>
+  </div>
+  <div id="pepalerts"></div>
+
+  <div class="card">
+    <h2>✅ Peptides médicaments (sur ordonnance)</h2>
+    <details><summary>Sémaglutide, liraglutide, dulaglutide, tirzépatide</summary>
+      <p>Agonistes du GLP-1 (le tirzépatide agit aussi sur le GIP). Autorisés en France pour le diabète de type 2 et, selon les produits, pour l'obésité ; conditions de prescription et de remboursement variables, à voir avec votre médecin. Effets fréquents : digestifs. Voir la section GLP-1 de l'onglet Programme.</p></details>
+    <details><summary>Rétatrutide, cagrilintide (CagriSema)</summary>
+      <p>Médicaments en développement (essais cliniques) à ma connaissance ; vérifiez leur statut actuel. Les flacons « de recherche » vendus en ligne ne sont pas un médicament autorisé.</p></details>
+    <details><summary>Tésamoréline</summary>
+      <p>Analogue de la GHRH approuvé dans certains pays pour une indication précise (lipodystrophie liée au VIH). Pas d'indication esthétique ou sportive.</p></details>
+    <details><summary>Insuline, analogues de la calcitonine, etc.</summary>
+      <p>Autres peptides médicaments, uniquement sous suivi médical.</p></details>
+  </div>
+
+  <div class="card">
+    <h2>⚠️ Peptides « de recherche » vendus en ligne</h2>
+    <p class="note">Non autorisés comme médicaments, sans contrôle qualité garanti. Ce que l'on sait, sans promesse d'efficacité.</p>
+    <details><summary>BPC-157</summary>
+      <p>Résultats surtout chez l'animal ; très peu de données humaines solides. Interdit en compétition (AMA, catégorie S0). Prudence théorique avec les antécédents de cancer (effet sur la formation de vaisseaux).</p></details>
+    <details><summary>TB-500 / thymosine bêta-4</summary>
+      <p>Données essentiellement animales. Interdit en compétition (AMA).</p></details>
+    <details><summary>GHK-Cu</summary>
+      <p>Présent dans certains cosmétiques (crèmes, sérums). L'usage injectable n'est pas autorisé et manque de données de sécurité.</p></details>
+    <details><summary>CJC-1295, ipamoréline, sermoréline (sécrétagogues de GH)</summary>
+      <p>Stimulent l'hormone de croissance. Non autorisés ; interdits en compétition. Risques évoqués : rétention d'eau, douleurs articulaires, hausse de la glycémie / résistance à l'insuline, effets hormonaux à long terme inconnus.</p></details>
+    <details><summary>Mélanotan II</summary>
+      <p>Produit de bronzage non autorisé : nausées, nævus qui foncent, érections prolongées, effets inconnus à long terme. Déconseillé.</p></details>
+    <details><summary>Sémaglutide / tirzépatide « de recherche » ou sans ordonnance</summary>
+      <p>Pureté, dosage et stérilité non garantis ; contrefaçons de stylos signalées par les autorités sanitaires ; risque d'erreur de dose. Passez par un médecin et une pharmacie.</p></details>
+  </div>
+
+  <div class="card">
+    <h2>🌱 Peptides en compléments (légaux)</h2>
+    <ul><li><b>Collagène hydrolysé</b> : preuves modestes pour la peau et les articulations.</li>
+    <li><b>Protéines de lactosérum (whey)</b> : utiles surtout pour atteindre l'objectif protéique.</li>
+    <li><b>Peptides bioactifs « anti-âge »</b> : promesses souvent supérieures aux preuves.</li></ul>
+  </div>
+
+  <div class="card">
+    <h2>🛡️ Réduction des risques</h2>
+    <ul>
+      <li>Parlez à un médecin ou pharmacien de tout produit pris, même acheté en ligne.</li>
+      <li>Ne partagez jamais de matériel ; matériel stérile à usage unique (infections, VIH, hépatites).</li>
+      <li>Méfiez-vous de la pureté, du dosage et de l'étiquetage : aucun contrôle garanti.</li>
+      <li>N'associez pas plusieurs produits actifs sur l'appétit, la glycémie ou l'hormone de croissance, ni avec un GLP-1, sans avis médical.</li>
+      <li>Bilan de base avant et pendant : glycémie, HbA1c, foie, reins, NFS.</li>
+      <li>Déconseillés en cas de grossesse, d'allaitement, de cancer actuel ou passé, de diabète mal équilibré.</li>
+      <li>Sportif en compétition : plusieurs de ces produits sont interdits (contrôle antidopage).</li>
+    </ul>
+    <div class="alert red">Fièvre, rougeur ou douleur qui s'étend au site d'injection, urticaire, gonflement du visage, gêne respiratoire, palpitations ou malaise : arrêtez et consultez rapidement (15 ou 112 si grave).</div>
+  </div>
+
+  <div class="card noprint">
+    <h2>📓 Mon journal peptides</h2>
+    <p class="note">Notez ce que vous utilisez, d'où cela vient et ce que vous ressentez, pour pouvoir en parler précisément à un professionnel.</p>
+    <div class="grid">
+      <div><label>Produit</label><input id="pn" placeholder="Nom du produit"></div>
+      <div><label>Origine</label><select id="po"><option>Prescrit (ordonnance)</option><option>Pharmacie</option><option>Achat sans ordonnance</option><option>Autre</option></select></div>
+      <div><label>Début</label><input type="date" id="pd"></div>
+      <div><label>Notes / effets ressentis</label><input id="pnt"></div>
+    </div>
+    <button class="btn" onclick="addPep()">Ajouter</button>
+    <div id="peplist"></div>
+  </div>
+</section>
+
+<!-- ============ SUIVI ============ -->
+<section class="tab" id="t-suivi">
+  <div class="card">
+    <h2>📈 Mon suivi</h2>
+    <div class="grid">
+      <div><label>Date</label><input type="date" id="sd"></div>
+      <div><label>Poids (kg)</label><input type="number" step="0.1" id="sp"></div>
+      <div><label>Faim (1 faible – 5 forte)</label><select id="sf"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+      <div><label>Satiété (1 faible – 5 forte)</label><select id="ss"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+      <div><label>Digestion (1 difficile – 5 parfaite)</label><select id="sg"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select></div>
+      <div><label>Énergie (1 – 5)</label><select id="se"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+      <div><label>Sommeil (heures)</label><input type="number" step="0.5" id="sh"></div>
+      <div><label>Activité (minutes)</label><input type="number" id="sa"></div>
+      <div><label>Humeur (1 basse – 5 bonne)</label><select id="sm"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+      <div><label>Stress (1 faible – 5 fort)</label><select id="sst"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select></div>
+      <div><label>Tour de taille (cm)</label><input type="number" id="stl"></div>
+      <div><label>Tension (ex : 125/80)</label><input id="st"></div>
+    </div>
+    <h3>Ce que je ressens aujourd'hui</h3>
+    <div id="symlog"></div>
+    <label class="chk"><input type="checkbox" id="sinj">💉 Injection GLP-1 aujourd'hui</label>
+    <label>Dose notée (facultatif)</label><input id="sid" placeholder="Comme prescrite">
+    <label>Note</label><input id="sn" placeholder="Nausées, reflux, humeur…">
+    <button class="btn" onclick="addLog()">Enregistrer</button>
+  </div>
+  <div class="card"><h2>Courbe de poids</h2><div id="chart"></div></div>
+  <div id="symsum"></div>
+  <div class="card"><h2>Historique</h2><div id="logs"></div></div>
+</section>
+
+</main>
+
+<script>
+const KEY="programme_sante_v1";
+const TABS=[["profil","👤 Profil"],["analyses","🩸 Analyses"],["programme","📋 Programme"],["menus","🍽️ Menus & courses"],["peptides","🧬 Peptides"],["suivi","📈 Suivi"]];
+const COND=[
+ ["contraception","Contraception hormonale (pilule, implant, anneau, stérilet hormonal)",1],
+ ["sopk","SOPK (syndrome des ovaires polykystiques)",1],
+ ["endo","Endométriose",1],
+ ["hashimoto","Hypothyroïdie / Hashimoto"],
+ ["diabete","Diabète"],
+ ["glp1","Traitement GLP-1 (Ozempic, Wegovy, Mounjaro, Saxenda…)"],
+ ["hta","Hypertension"],
+ ["anemie","Anémie connue"],
+ ["osteo","Ostéopénie / ostéoporose"],
+ ["postpartum","Post-partum (accouchement il y a moins d'un an)",1],
+ ["seinK","Antécédent de cancer du sein",1],
+ ["foie","Maladie du foie"],
+ ["rein","Maladie des reins"],
+ ["pancreatite","Antécédent de pancréatite"],
+ ["calculs","Calculs biliaires / problème de vésicule"],
+ ["mtc","Antécédent perso ou familial de cancer médullaire de la thyroïde / MEN2"],
+ ["tca","Antécédent de troubles du comportement alimentaire"],
+ ["chol","Cholestérol / triglycérides élevés"],
+ ["apnee","Apnée du sommeil"],
+ ["rgo","Reflux gastro-œsophagien (RGO)"],
+ ["grossesse","Grossesse, allaitement ou projet de grossesse",1],
+ ["meno","Ménopause / périménopause",1]
+];
+const SYM=[
+ ["fatigue","Fatigue"],["spm","Syndrome prémenstruel",1],["reglesdou","Règles douloureuses",1],["reglesab","Règles abondantes",1],
+ ["cycleirr","Cycle irrégulier",1],["bouffees","Bouffées de chaleur / sueurs nocturnes",1],["sommeil","Sommeil difficile"],
+ ["ballon","Ballonnements"],["constip","Constipation"],["diarrhee","Diarrhée"],["reflux","Reflux, brûlures d'estomac"],["nausee","Nausées"],["vomit","Vomissements"],["crampes","Crampes musculaires"],
+ ["faimabs","Perte d'appétit marquée"],["fringale","Fringales sucrées"],["cheveux","Chute de cheveux"],["frilo","Frilosité / peau sèche"],["peau","Peau terne / cicatrisation lente"],
+ ["vertige","Vertiges / étourdissements"],["cephal","Maux de tête"],["palpit","Palpitations"],["jambes","Jambes lourdes / gonflées"],["soif","Soif intense / urines fréquentes"],
+ ["stress","Stress / anxiété"],["humeur","Humeur basse / irritabilité"],["brouillard","Brouillard mental / concentration"],["libido","Baisse de libido"],["articul","Douleurs articulaires"]
+];
+const BIL=[
+ ["hb","Hémoglobine","g/dL",{F:[12,16],H:[13,17.5]}],
+ ["ferr","Ferritine","µg/L",{F:[30,150],H:[30,300]}],
+ ["vitd","Vitamine D (25-OH)","ng/mL",{F:[30,100],H:[30,100]}],
+ ["b12","Vitamine B12","pg/mL",{F:[300,900],H:[300,900]}],
+ ["fol","Folates (B9)","ng/mL",{F:[4,20],H:[4,20]}],
+ ["tsh","TSH","mUI/L",{F:[0.4,4],H:[0.4,4]}],
+ ["gly","Glycémie à jeun","g/L",{F:[0.7,1],H:[0.7,1]}],
+ ["hba1c","HbA1c","%",{F:[4,5.6],H:[4,5.6]}],
+ ["ldl","LDL-cholestérol","g/L",{F:[0,1.6],H:[0,1.6]}],
+ ["hdl","HDL-cholestérol","g/L",{F:[0.5,2],H:[0.4,2]}],
+ ["tg","Triglycérides","g/L",{F:[0,1.5],H:[0,1.5]}],
+ ["crp","CRP","mg/L",{F:[0,5],H:[0,5]}],
+ ["alat","ALAT","UI/L",{F:[0,40],H:[0,50]}],
+ ["creat","Créatinine","µmol/L",{F:[45,84],H:[59,104]}],
+ ["vgm","VGM","fL",{F:[80,100],H:[80,100]}],
+ ["zinc","Zinc","µmol/L",{F:[10,18],H:[10,18]}],
+ ["mgs","Magnésium sérique","mmol/L",{F:[0.7,1],H:[0.7,1]}],
+ ["ca","Calcium","mmol/L",{F:[2.2,2.6],H:[2.2,2.6]}],
+ ["k","Potassium","mmol/L",{F:[3.5,5],H:[3.5,5]}],
+ ["na","Sodium","mmol/L",{F:[135,145],H:[135,145]}],
+ ["se","Sélénium","µg/L",{F:[70,150],H:[70,150]}],
+ ["homocy","Homocystéine","µmol/L",{F:[5,15],H:[5,15]}],
+ ["t4l","T4 libre","pmol/L",{F:[10,22],H:[10,22]}],
+ ["tpo","Anticorps anti-TPO","UI/mL",{F:[0,35],H:[0,35]}],
+ ["ins","Insuline à jeun","µUI/mL",{F:[2,20],H:[2,20]}],
+ ["chol","Cholestérol total","g/L",{F:[0,2],H:[0,2]}],
+ ["asat","ASAT","UI/L",{F:[0,40],H:[0,50]}],
+ ["ggt","GGT","UI/L",{F:[0,40],H:[0,60]}],
+ ["lipase","Lipase","UI/L",{F:[0,60],H:[0,60]}],
+ ["dfg","Débit de filtration (DFG)","mL/min",{F:[60,200],H:[60,200]}],
+ ["urate","Acide urique","µmol/L",{F:[150,360],H:[200,420]}],
+ ["testo","Testostérone totale","nmol/L",{F:[0.3,2.5],H:[9,35]}],
+ ["plaq","Plaquettes","G/L",{F:[150,400],H:[150,400]}],
+ ["leuco","Leucocytes","G/L",{F:[4,10],H:[4,10]}]
+];
+const DEF={
+ p:{prenom:"Annie",age:41,sexe:"F",taille:169,poids:60,mg:"",objectif:"perte",activite:"1.55",
+    glp1mol:"",glp1date:"",regime:"tout",repas:"3+1",poisson:"1",laitages:"jamais",sanslactose:false,sansgluten:false,
+    foyer:1,temps:"0",budget:false,batch:false,exclus:"",tour:"",sys:"",dia:"",fc:"",glp1jour:"",glp1dose:""},
+ cond:{glp1:true},
+ med:{},pep:[],myfoods:[],
+ sym:{fatigue:true,sommeil:true},
+ bilans:[],compl:[],logs:[],week:null,shop:{}
+};
+let S=load();
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY));if(j)return Object.assign(JSON.parse(JSON.stringify(DEF)),j)}catch(e){}return JSON.parse(JSON.stringify(DEF))}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));document.getElementById("savemsg").textContent="Enregistré ✔ "+new Date().toLocaleTimeString("fr-FR")}catch(e){}}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+const frDate=d=>d?d.split("-").reverse().join("/"):"";
+
+/* ---------- NAV ---------- */
+function showTab(id){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.id==="t-"+id));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===id));
+  if(id==="programme")renderProg();
+  if(id==="menus")renderMenus();
+  if(id==="suivi")renderSuivi();
+  if(id==="analyses")renderBilans();
+  if(id==="peptides")renderPep();
+  window.scrollTo(0,0);
+}
+$("nav").innerHTML=TABS.map(t=>`<button data-t="${t[0]}" onclick="showTab('${t[0]}')">${t[1]}</button>`).join("");
+
+/* ---------- PROFIL ---------- */
+function initProfil(){
+  $("conds").innerHTML=COND.map(c=>`<label class="chk ${c[2]?"f":""}"><input type="checkbox" data-g="cond" data-k="${c[0]}">${c[1]}</label>`).join("");
+  $("syms").innerHTML=SYM.map(c=>`<label class="chk ${c[2]?"f":""}"><input type="checkbox" data-g="sym" data-k="${c[0]}">${c[1]}</label>`).join("");
+  $("meds").innerHTML=MED.map(c=>`<label class="chk"><input type="checkbox" data-g="med" data-k="${c[0]}">${c[1]}</label>`).join("");
+  document.querySelectorAll("#t-profil [data-k]").forEach(el=>{
+    const g=el.dataset.g,k=el.dataset.k;
+    const v=g?S[g][k]:S.p[k];
+    if(el.type==="checkbox")el.checked=!!v;else el.value=v==null?"":v;
+  });
+  syncProfilUI();
+}
+function syncProfilUI(){
+  document.body.classList.toggle("male",S.p.sexe==="H");
+  $("glp1box").style.display=S.cond.glp1?"block":"none";
+}
+document.addEventListener("input",e=>{
+  const el=e.target;if(!el.dataset||!el.dataset.k)return;
+  const g=el.dataset.g,k=el.dataset.k;
+  let v=el.type==="checkbox"?el.checked:el.value;
+  if(g){if(v)S[g][k]=true;else delete S[g][k]}
+  else{ if(el.type==="number"&&v!=="")v=parseFloat(v); S.p[k]=v; if(["repas","poisson","laitages","sanslactose","sansgluten","regime","exclus","budget","batch","temps","foyer"].includes(k))S.week=null }
+  syncProfilUI();save();
+});
+
+/* ---------- CALCULS ---------- */
+function calc(){
+  const p=S.p,w=+p.poids||0,h=+p.taille||0,a=+p.age||0;
+  const bmr=Math.round(10*w+6.25*h-5*a+(p.sexe==="H"?5:-161));
+  const tdee=Math.round(bmr*(+p.activite||1.2)/10)*10;
+  const kc={perte:Math.round(tdee*0.85/10)*10,maintien:tdee,muscle:Math.round(tdee*1.08/10)*10};
+  const target=kc[p.objectif]||tdee;
+  let pf=p.objectif==="maintien"?1.2:1.8;
+  if(S.cond.rein)pf=0.8;
+  const prot=Math.round(w*pf);
+  const eau=(w*0.035).toFixed(1);
+  return{bmr,tdee,kc,target,prot,pf,eau};
+}
+function bodyCard(){
+  const p=S.p,w=+p.poids,h=(+p.taille)/100;if(!w||!h)return"";
+  const imc=w/(h*h),cat=imc<18.5?"maigreur":imc<25?"corpulence normale":imc<30?"surpoids":"obésité";
+  let rows=`<tr><td>IMC</td><td><b>${imc.toFixed(1)}</b> (${cat})</td></tr><tr><td>Poids de référence (IMC 22)</td><td>≈ ${Math.round(22*h*h)} kg</td></tr>`;
+  if(+p.tour)rows+=`<tr><td>Tour de taille / taille</td><td><b>${(+p.tour/+p.taille).toFixed(2)}</b> (repère &lt; 0,50)</td></tr>`;
+  if(+p.mg){const g=w*p.mg/100;rows+=`<tr><td>Masse grasse / maigre</td><td>${g.toFixed(1)} kg / ${(w-g).toFixed(1)} kg</td></tr>`}
+  if(+p.sys&&+p.dia){const hi=p.sys>=140||p.dia>=90;rows+=`<tr><td>Tension</td><td>${p.sys}/${p.dia} <span class="pill ${hi?"hi":"ok"}">${hi?"élevée : à faire contrôler":"dans le repère"}</span></td></tr>`}
+  if(+p.fc)rows+=`<tr><td>Pouls au repos</td><td>${p.fc} bpm</td></tr>`;
+  return `<div class="card"><h2>🧍 Indicateurs santé</h2><table>${rows}</table><p class="note">L'IMC est un repère grossier (il ne distingue pas muscle et graisse) : tour de taille, force et composition corporelle sont plus parlants.</p></div>`;
+}
+function latestBilan(){return S.bilans.length?S.bilans.slice().sort((a,b)=>a.date<b.date?1:-1)[0]:null}
+function flag(key,val){
+  const m=BIL.find(b=>b[0]===key);if(!m||val===""||val==null)return null;
+  const r=m[3][S.p.sexe==="H"?"H":"F"];
+  return val<r[0]?"lo":val>r[1]?"hi":"ok";
+}
+
+/* ---------- ANALYSES ---------- */
+let bilDraft={};
+function renderBilForm(){
+  $("bdate").value=bilDraft.date||today();
+  $("bilform").innerHTML=groupedForm();return;
+  BIL.map(b=>{
+    const r=b[3][S.p.sexe==="H"?"H":"F"];
+    return `<div class="bil"><div>${b[1]}<br><span class="note">repère ${r[0]}–${r[1]} ${b[2]}</span></div>
+    <input type="number" step="any" id="b_${b[0]}" value="${bilDraft[b[0]]??""}"><span class="note">${b[2]}</span></div>`}).join("");
+}
+function saveBilan(){
+  const d={date:$("bdate").value||today()};
+  BIL.forEach(b=>{const v=$("b_"+b[0]).value;if(v!=="")d[b[0]]=parseFloat(v)});
+  if(Object.keys(d).length<2){alert("Saisissez au moins une valeur.");return}
+  S.bilans=S.bilans.filter(x=>x.date!==d.date);S.bilans.push(d);save();bilDraft={};renderBilForm();renderBilans();
+}
+function newBilan(){bilDraft={};renderBilForm()}
+function editBilan(date){bilDraft=Object.assign({},S.bilans.find(b=>b.date===date));renderBilForm();window.scrollTo(0,0)}
+function delBilan(date){if(confirm("Supprimer ce bilan ?")){S.bilans=S.bilans.filter(b=>b.date!==date);save();renderBilans()}}
+function renderBilans(){
+  renderBilForm();renderBilSuggest();
+  if(!S.bilans.length){$("bilans").innerHTML='<p class="note">Aucun bilan pour l\'instant.</p>';return}
+  $("bilans").innerHTML=S.bilans.slice().sort((a,b)=>a.date<b.date?1:-1).map(bl=>{
+    const rows=BIL.filter(b=>bl[b[0]]!=null).map(b=>{const f=flag(b[0],bl[b[0]]);
+      return `<tr><td>${b[1]}</td><td><b>${bl[b[0]]}</b> ${b[2]}</td><td><span class="pill ${f}">${f==="ok"?"dans le repère":f==="lo"?"bas":"élevé"}</span>${f!=="ok"&&HINT[b[0]]&&HINT[b[0]][f]?"<br><small class='note'>"+HINT[b[0]][f]+"</small>":""}</td></tr>`}).join("");
+    return `<details><summary>Bilan du ${frDate(bl.date)}</summary><table>${rows}</table>
+    <button class="btn sec" onclick="editBilan('${bl.date}')">Compléter / corriger</button>
+    <button class="btn sec" onclick="delBilan('${bl.date}')">Supprimer</button>
+    <p class="note">Repères indicatifs : ils varient selon le laboratoire. Seul votre médecin interprète un bilan.</p></details>`}).join("");
+}
+
+/* ---------- PROGRAMME ---------- */
+function addCompl(){
+  const n=$("cn").value.trim();if(!n)return;
+  S.compl.push({n,d:$("cd").value.trim(),m:$("cm").value.trim()});$("cn").value=$("cd").value=$("cm").value="";save();renderProg();
+}
+function delCompl(i){S.compl.splice(i,1);save();renderProg()}
+function suppList(){
+  const c=S.cond,s=S.sym,bl=latestBilan()||{},out=[];
+  const f=k=>flag(k,bl[k]);
+  if(f("vitd")==="lo")out.push(["Vitamine D","Valeur basse : dose et durée à fixer avec votre médecin (ne pas improviser).","bilan"]);
+  else if(!bl.vitd)out.push(["Vitamine D","Souvent insuffisante de novembre à mars en France : à doser avant de supplémenter.","hiver"]);
+  if(f("ferr")==="lo"||f("hb")==="lo"||c.anemie)out.push(["Fer","Ferritine / hémoglobine basses ou anémie connue : traitement à définir avec le médecin. À prendre à distance du calcium, du thé et du café.","bilan"]);
+  if(f("b12")==="lo"||S.p.regime==="vege")out.push(["Vitamine B12","À contrôler (valeur basse ou alimentation végétarienne).","bilan"]);
+  if(c.osteo||S.p.laitages==="jamais"||c.glp1)out.push(["Calcium (citrate)","500 mg/j en complément de l'alimentation (apport laitier faible, perte de poids ou fragilité osseuse). Espacer de 2 h du fer.","os"]);
+  if(s.sommeil||s.spm||s.crampes||s.fatigue)out.push(["Magnésium","D'abord via l'alimentation (menu du jour mis en avant) ; un complément est optionnel.","symptômes"]);
+  if(+S.p.poisson<1||S.p.regime==="vege")out.push(["Oméga-3 (EPA/DHA)","Si le poisson gras est absent ou rare ; huile de colza / noix en complément alimentaire.","alimentation"]);
+  if(c.glp1&&!c.rein&&!c.foie)out.push(["Protéines (poudre, optionnel)","Utile uniquement si l'appétit réduit empêche d'atteindre l'objectif protéique par l'alimentation.","GLP-1"]);
+  if(c.hashimoto)out.push(["⚠ Thyroïde","Lévothyroxine : prendre à jeun, à 4 h du calcium, du fer et du magnésium. Sélénium / iode : avis médical d'abord.","interaction"]);
+  if(c.seinK)out.push(["⚠ Antécédent cancer du sein","Éviter les compléments phyto-œstrogènes (soja concentré, trèfle rouge, houblon…) sans avis du cancérologue.","interaction"]);
+  extraSupp(out,f,bl,c,s);
+  return out;
+}
+function renderProg(){
+  const k=calc(),p=S.p,c=S.cond,s=S.sym;
+  $("prog-head").innerHTML=`<h2>📋 Programme de ${esc(p.prenom||"moi")}</h2>
+  <p class="note">${esc(p.age)} ans · ${esc(p.taille)} cm · ${esc(p.poids)} kg · objectif : ${({perte:"perte de masse grasse",maintien:"maintien",muscle:"prise de muscle"})[p.objectif]}</p>
+  <div class="grid">
+   <div class="kpi"><b>${k.bmr}</b><span>Métabolisme de base</span></div>
+   <div class="kpi"><b>${k.tdee}</b><span>Dépense totale (TDEE)</span></div>
+   <div class="kpi"><b>${k.target}</b><span>Ma cible kcal / jour</span></div>
+   <div class="kpi"><b>${k.prot} g</b><span>Protéines / jour</span></div>
+  </div>
+  <table style="margin-top:10px"><tr><td>Pour perdre du gras</td><td>${k.kc.perte} kcal</td></tr><tr><td>Pour maintenir</td><td>${k.kc.maintien} kcal</td></tr><tr><td>Pour prendre du muscle</td><td>${k.kc.muscle} kcal</td></tr></table>
+  <p class="note">Formule Mifflin-St Jeor × niveau d'activité ${p.activite}. Estimation à ±10 % : si le poids n'évolue pas comme prévu après 3 à 4 semaines, ajustez de 100 à 200 kcal.</p>`;
+
+  let h="";
+  h+=bodyCard();
+  /* alertes */
+  const al=[];
+  if(c.rein)al.push(["red","Maladie des reins : l'objectif protéique est limité à 0,8 g/kg. Toute adaptation alimentaire est à valider avec votre néphrologue."]);
+  if(c.foie)al.push(["red","Maladie du foie : validez compléments et apport protéique avec votre hépatologue."]);
+  if(c.diabete&&c.glp1)al.push(["red","Diabète + GLP-1 : surveillez la glycémie et parlez de tout changement alimentaire important à votre médecin (adaptation éventuelle des autres traitements)."]);
+  else if(c.diabete)al.push(["","Diabète : privilégiez fibres, protéines et féculents complets ; suivi glycémique selon votre médecin."]);
+  if(c.hta)al.push(["","Hypertension : limitez le sel (plats préparés, charcuterie, fromages), privilégiez potassium (légumes, fruits)."]);
+  if(c.postpartum)al.push(["","Post-partum : ne pas viser un déficit calorique important, surtout en cas d'allaitement ; avis sage-femme / médecin."]);
+  if(c.osteo)al.push(["","Ostéopénie / ostéoporose : calcium alimentaire, vitamine D, protéines suffisantes et renforcement musculaire en charge."]);
+  const bl=latestBilan();
+  extraAlerts(al);
+  if(bl){const hi=BIL.filter(b=>flag(b[0],bl[b[0]])&&flag(b[0],bl[b[0]])!=="ok").map(b=>b[1]+" ("+(flag(b[0],bl[b[0]])==="lo"?"bas":"élevé")+")");
+    if(hi.length)al.push(["","Bilan du "+frDate(bl.date)+" – à discuter avec votre médecin : "+hi.join(", ")+"."])}
+  else al.push(["","Aucun bilan sanguin enregistré : l'onglet Analyses permet d'affiner compléments et menus (facultatif)."]);
+  if(al.length)h+=`<div class="card"><h2>⚠️ Points d'attention</h2>${al.map(a=>`<div class="alert ${a[0]}">${a[1]}</div>`).join("")}</div>`;
+
+  /* GLP-1 */
+  if(c.glp1)h+=`<div class="card"><h2>💉 Mon protocole : traitement GLP-1</h2>
+  <p>Les agonistes du GLP-1 (sémaglutide, tirzépatide, liraglutide…) ralentissent la vidange de l'estomac et réduisent l'appétit. La perte de poids est importante, mais une part peut venir des muscles si les protéines et l'activité ne suivent pas.</p>
+  ${p.glp1mol?`<p class="note">Molécule : ${esc(p.glp1mol)}${p.glp1date?" · début "+frDate(p.glp1date):""}</p>`:""}
+  <h3>Alimentation</h3><ul>
+   <li>Protéines : 1,2 à 1,6 g par kg (poids de référence), 20 à 30 g à chaque repas ; cible chiffrée ci-dessus : <b>${k.prot} g/jour</b></li>
+   <li>4 à 5 petits repas, en commençant par les protéines</li>
+   <li>Fibres et légumes progressivement ; hydratation entre les repas (≈ ${k.eau} L/jour)</li>
+   <li>Éviter les plats gras et lourds, l'alcool et les boissons gazeuses en cas d'inconfort</li>
+   <li>Renforcement musculaire 2 à 3 fois par semaine</li></ul>
+  <p class="note">La dose, l'augmentation et l'arrêt du traitement relèvent uniquement de votre médecin. Signalez nausées persistantes, vomissements, douleurs abdominales vives ou signes de déshydratation.</p></div>`+glp1Extra();
+
+  /* Activité */
+  h+=`<div class="card"><h2>🏃 Activité</h2>
+  <p>150 minutes par semaine d'activité modérée + renforcement musculaire 2 fois (3 si GLP-1 ou objectif muscle).</p>
+  <table>
+  <tr><td>Lundi</td><td>Renforcement A (corps entier) · 40 min</td></tr>
+  <tr><td>Mardi</td><td>Marche rapide · 30–40 min</td></tr>
+  <tr><td>Mercredi</td><td>Repos actif : mobilité / étirements · 15 min</td></tr>
+  <tr><td>Jeudi</td><td>Renforcement B (jambes, dos, gainage) · 40 min</td></tr>
+  <tr><td>Vendredi</td><td>Marche rapide ou vélo · 30–40 min</td></tr>
+  <tr><td>Samedi</td><td>Activité plaisir (randonnée, natation…) · 45–60 min</td></tr>
+  <tr><td>Dimanche</td><td>Repos + étirements</td></tr></table>
+  <p class="note">Renforcement : squats, fentes, pompes inclinées, rowing élastique, gainage, charges progressives. Pas de douleur vive ; avis médical avant reprise si pathologie cardiaque.</p></div>`;
+
+  /* Sommeil/lumière */
+  h+=`<div class="card"><h2>😴 Sommeil &amp; ☀️ Lumière</h2>
+  <p><b>Sommeil :</b> 7 à 9 heures. Horaires réguliers, écrans coupés 1 h avant, chambre fraîche, caféine avant 14 h.</p>
+  <p><b>Lumière :</b> 15 à 20 minutes dehors en journée (idéalement le matin) pour régler l'horloge biologique.</p>
+  ${s.sommeil?'<div class="alert">Sommeil difficile signalé : dîner léger 3 h avant le coucher, aliments riches en magnésium, routine fixe ; si insomnie persistante, parlez-en à votre médecin.</div>':""}</div>`;
+
+  /* Symptômes */
+  const tips=[];
+  if(s.fatigue)tips.push("Fatigue : vérifier ferritine, B12, vitamine D, TSH, glycémie ; protéines à chaque repas, sommeil et marche quotidienne.");
+  if(s.constip)tips.push("Constipation : fibres progressives (légumes, légumineuses, avoine), eau, marche, kiwi.");
+  if(s.reflux)tips.push("Reflux : petits repas, éviter de s'allonger 2–3 h après, limiter gras, café, alcool, menthe.");
+  if(s.ballon)tips.push("Ballonnements : manger lentement, introduire légumineuses petit à petit, limiter boissons gazeuses.");
+  if(s.nausee)tips.push("Nausées : repas petits et froids/tièdes, éviter l'odeur forte, fractionner les protéines ; si persistantes, consulter.");
+  if(s.crampes)tips.push("Crampes : hydratation, magnésium et potassium alimentaires.");
+  if(s.spm||s.reglesdou)tips.push("SPM / règles douloureuses : magnésium alimentaire, oméga-3, activité régulière, limiter sel et alcool en seconde moitié de cycle.");
+  if(s.reglesab)tips.push("Règles abondantes : contrôler ferritine ; aliments riches en fer (viande rouge maigre, lentilles + vitamine C).");
+  if(s.cycleirr)tips.push("Cycle irrégulier : avis médical (thyroïde, SOPK…) ; éviter les déficits caloriques trop forts.");
+  if(s.bouffees)tips.push("Bouffées de chaleur : repérer les déclencheurs (alcool, épices, caféine), activité régulière ; avis médical si gêne importante.");
+  if(s.diarrhee)tips.push("Diarrhée : hydratation + électrolytes, limiter gras, lactose et édulcorants ; consulter si > 48 h ou présence de sang.");
+  if(s.vomit)tips.push("Vomissements : petites gorgées fréquentes ; s'ils se répètent ou si vous ne pouvez plus boire, consultez (déshydratation, GLP-1).");
+  if(s.faimabs)tips.push("Perte d'appétit marquée : protéines d'abord, repas petits et fréquents, ne pas sauter de repas ; signaler une perte > 1 kg/semaine.");
+  if(s.fringale)tips.push("Fringales sucrées : protéines et fibres à chaque repas, sommeil suffisant, collation prévue plutôt que grignotage.");
+  if(s.cheveux)tips.push("Chute de cheveux : fréquente après une perte de poids rapide ; vérifier ferritine, zinc, TSH, vitamine D ; assez de protéines.");
+  if(s.frilo)tips.push("Frilosité / peau sèche : penser à la thyroïde (TSH), au fer et à un apport calorique trop bas.");
+  if(s.peau)tips.push("Peau terne / cicatrisation lente : protéines, vitamine C, zinc, hydratation ; contrôler la glycémie si persistant.");
+  if(s.vertige)tips.push("Vertiges : hydratation, repas réguliers, se lever lentement ; contrôler tension, fer, glycémie.");
+  if(s.cephal)tips.push("Maux de tête : hydratation, repas réguliers, sommeil, caféine modérée ; consulter s'ils sont inhabituels ou brutaux.");
+  if(s.palpit)tips.push("Palpitations : à signaler à un médecin (tension, thyroïde, fer, rythme) ; urgent si douleur thoracique ou malaise.");
+  if(s.jambes)tips.push("Jambes lourdes : marche, jambes surélevées, limiter le sel ; consulter si gonflement d'un seul côté.");
+  if(s.soif)tips.push("Soif intense / urines fréquentes : contrôler rapidement glycémie et HbA1c.");
+  if(s.stress)tips.push("Stress / anxiété : respiration lente 5 min, marche, limiter caféine et écrans le soir ; en parler si c'est invalidant.");
+  if(s.humeur)tips.push("Humeur basse : sommeil, lumière, activité et lien social aident ; au-delà de 2 semaines, consultez un médecin.");
+  if(s.brouillard)tips.push("Brouillard mental : vérifier sommeil, fer, B12, vitamine D, TSH, glycémie ; repas protéinés réguliers.");
+  if(s.libido)tips.push("Baisse de libido : fatigue, stress, déficit calorique, thyroïde, hormones ou médicaments : à discuter avec un médecin.");
+  if(s.articul)tips.push("Douleurs articulaires : renforcement progressif, oméga-3 alimentaires, perte de poids ; consulter si gonflement ou raideur matinale prolongée.");
+  if(tips.length)h+=`<div class="card"><h2>🌸 Selon mes symptômes</h2><ul>${tips.map(t=>`<li>${t}</li>`).join("")}</ul></div>`;
+
+  h+=lifeCards();
+  /* Compléments */
+  const sl=suppList();
+  h+=`<div class="card"><h2>💊 Mes compléments</h2>
+  <div class="alert">Repères éducatifs, sans valeur de diagnostic ni de prescription. Avant tout complément : avis de votre médecin, sage-femme ou pharmacien, en particulier en cas de grossesse, d'allaitement, de traitement ou de maladie.</div>
+  ${sl.length?`<table>${sl.map(x=>`<tr><td><b>${x[0]}</b></td><td>${x[1]}</td></tr>`).join("")}</table>`:'<p class="note">Rien de particulier à proposer avec les données actuelles.</p>'}
+  ${S.compl.length?`<h3>Ce que je prends déjà</h3><table>${S.compl.map((x,i)=>`<tr><td>${esc(x.n)}</td><td>${esc(x.d)}</td><td>${esc(x.m)}</td><td class="noprint"><a href="#" onclick="delCompl(${i});return false">✕</a></td></tr>`).join("")}</table>`:""}</div>`;
+  $("prog").innerHTML=h;
+}
+
+/* ---------- ALIMENTS & MENUS ---------- */
+// id:[nom, kcal/100g, prot/100g, €/kg, catégorie, tags]
+const F={
+ oeuf:["Œufs",143,12.5,5,"Œufs & laitages",["egg"]],
+ blanc:["Blanc d'œuf",47,10.5,5,"Œufs & laitages",["egg"]],
+ skyr:["Skyr",63,11,5,"Œufs & laitages",["lactose"]],
+ fb:["Fromage blanc 0 %",45,8,3,"Œufs & laitages",["lactose"]],
+ cott:["Cottage cheese",98,11,7,"Œufs & laitages",["lactose"]],
+ soja:["Yaourt au soja nature",45,4,4,"Œufs & laitages",[]],
+ poulet:["Blanc de poulet",110,23,10,"Viandes & poissons",["meat"]],
+ dinde:["Escalope de dinde",105,22,10,"Viandes & poissons",["meat"]],
+ steak:["Steak haché 5 %",125,21,12,"Viandes & poissons",["meat"]],
+ saumon:["Saumon",200,20,20,"Viandes & poissons",["fish"]],
+ cabillaud:["Cabillaud",82,18,16,"Viandes & poissons",["fish"]],
+ thon:["Thon au naturel",116,26,15,"Viandes & poissons",["fish"]],
+ crevette:["Crevettes",85,18,18,"Viandes & poissons",["fish"]],
+ tofu:["Tofu ferme",120,13,8,"Protéines végétales",[]],
+ lentille:["Lentilles cuites",116,9,3,"Protéines végétales",[]],
+ poischiche:["Pois chiches cuits",140,8,3,"Protéines végétales",[]],
+ avoine:["Flocons d'avoine",370,13,3,"Féculents",["gluten"]],
+ riz:["Riz basmati cuit",130,2.7,2.5,"Féculents",[]],
+ pdt:["Pommes de terre",77,2,1.5,"Féculents",[]],
+ patate:["Patate douce",86,1.6,3,"Féculents",[]],
+ quinoa:["Quinoa cuit",120,4.4,5,"Féculents",[]],
+ pain:["Pain complet",250,9,4,"Féculents",["gluten"]],
+ pates:["Pâtes complètes cuites",125,5,2,"Féculents",["gluten"]],
+ brocoli:["Brocoli",34,2.8,3,"Fruits & légumes",[]],
+ courgette:["Courgette",17,1.2,2.5,"Fruits & légumes",[]],
+ epinard:["Épinards",23,2.9,5,"Fruits & légumes",[]],
+ haricot:["Haricots verts",31,1.8,3.5,"Fruits & légumes",[]],
+ carotte:["Carottes",41,0.9,1.5,"Fruits & légumes",[]],
+ tomate:["Tomates",18,0.9,3.5,"Fruits & légumes",[]],
+ salade:["Salade verte",15,1.4,5,"Fruits & légumes",[]],
+ poivron:["Poivrons",30,1,4,"Fruits & légumes",[]],
+ champi:["Champignons",22,3,5,"Fruits & légumes",[]],
+ banane:["Banane",89,1.1,2,"Fruits & légumes",[]],
+ pomme:["Pomme",52,0.3,2.5,"Fruits & légumes",[]],
+ rouges:["Fruits rouges",45,1,10,"Fruits & légumes",[]],
+ kiwi:["Kiwi",61,1.1,4,"Fruits & légumes",[]],
+ huile:["Huile d'olive",884,0,8,"Épicerie & oléagineux",[]],
+ amande:["Amandes",580,21,12,"Épicerie & oléagineux",[]],
+ noix:["Noix",650,15,14,"Épicerie & oléagineux",[]],
+ maquereau:["Maquereau",205,19,12,"Viandes & poissons",["fish","oily"]],
+ sardine:["Sardines (boîte, nature)",190,23,10,"Viandes & poissons",["fish","oily"]],
+ truite:["Truite",150,21,14,"Viandes & poissons",["fish","oily"]],
+ merlu:["Merlu",80,17,12,"Viandes & poissons",["fish"]],
+ jambon:["Jambon blanc (sans couenne)",110,20,13,"Viandes & poissons",["meat"]],
+ boeuf:["Bœuf maigre (rumsteck)",130,22,18,"Viandes & poissons",["meat"]],
+ tempeh:["Tempeh",190,19,14,"Protéines végétales",[]],
+ edamame:["Edamame",120,11,8,"Protéines végétales",[]],
+ harirouge:["Haricots rouges cuits",125,8,3,"Protéines végétales",[]],
+ corail:["Lentilles corail cuites",110,8,3,"Protéines végétales",[]],
+ seitan:["Seitan",120,24,12,"Protéines végétales",["gluten"]],
+ houmous:["Houmous",230,7,9,"Protéines végétales",[]],
+ rizcomplet:["Riz complet cuit",125,2.8,3,"Féculents",[]],
+ sarrasin:["Sarrasin cuit",92,3.4,4,"Féculents",[]],
+ boulgour:["Boulgour cuit",83,3,3,"Féculents",["gluten"]],
+ painsg:["Pain sans gluten",240,4,9,"Féculents",[]],
+ chouf:["Chou-fleur",25,1.9,3,"Fruits & légumes",[]],
+ aubergine:["Aubergine",25,1,3,"Fruits & légumes",[]],
+ courge:["Courge / potimarron",30,1,2.5,"Fruits & légumes",[]],
+ asperge:["Asperges",20,2.2,8,"Fruits & légumes",[]],
+ petitpois:["Petits pois",80,5,3,"Fruits & légumes",[]],
+ concombre:["Concombre",12,0.7,2,"Fruits & légumes",[]],
+ betterave:["Betterave cuite",43,1.7,3,"Fruits & légumes",[]],
+ avocat:["Avocat",160,2,6,"Fruits & légumes",[]],
+ myrtille:["Myrtilles",57,0.7,14,"Fruits & légumes",[]],
+ fraise:["Fraises",32,0.7,8,"Fruits & légumes",[]],
+ poire:["Poire",57,0.4,3,"Fruits & légumes",[]],
+ orange:["Orange",47,0.9,2.2,"Fruits & légumes",[]],
+ chia:["Graines de chia",486,17,15,"Épicerie & oléagineux",[]],
+ lin:["Graines de lin",530,18,6,"Épicerie & oléagineux",[]],
+ courgraine:["Graines de courge",560,30,12,"Épicerie & oléagineux",[]],
+ cacahuete:["Beurre de cacahuète 100 %",600,25,10,"Épicerie & oléagineux",[]],
+ chocnoir:["Chocolat noir 70 %",570,8,12,"Épicerie & oléagineux",[]],
+ sojabois:["Boisson au soja nature",40,3.3,1.5,"Œufs & laitages",[]],
+ laitecr:["Lait écrémé",35,3.4,1.1,"Œufs & laitages",["lactose"]]
+};
+// type: B petit-déj, M plat principal, S collation
+const TPL={
+ B1:{t:"B",n:"Skyr, flocons d'avoine, fruits rouges, amandes",i:[["skyr",200],["avoine",40],["rouges",100],["amande",10]],min:5},
+ B2:{t:"B",n:"Omelette 2 œufs + blancs, pain complet, tomate",i:[["oeuf",120],["blanc",100],["pain",50],["tomate",100]],min:10},
+ B3:{t:"B",n:"Fromage blanc, banane, noix",i:[["fb",200],["banane",100],["noix",15]],min:5},
+ B4:{t:"B",n:"Yaourt au soja, kiwi, amandes",i:[["soja",250],["kiwi",100],["amande",15]],min:5},
+ B5:{t:"B",n:"2 œufs durs, pomme, amandes",i:[["oeuf",120],["pomme",150],["amande",15]],min:15},
+ M1:{t:"M",n:"Poulet, riz basmati, brocoli",i:[["poulet",120],["riz",180],["brocoli",200],["huile",8]],min:25},
+ M2:{t:"M",n:"Saumon, patate douce, haricots verts",i:[["saumon",130],["patate",200],["haricot",200],["huile",5]],min:25,oily:1,price:1},
+ M3:{t:"M",n:"Steak haché, pommes de terre, salade-tomate",i:[["steak",125],["pdt",250],["salade",80],["tomate",100],["huile",8]],min:25},
+ M4:{t:"M",n:"Cabillaud, quinoa, courgette",i:[["cabillaud",150],["quinoa",180],["courgette",250],["huile",8]],min:25},
+ M5:{t:"M",n:"Lentilles, œufs, carottes",i:[["lentille",200],["oeuf",60],["carotte",150],["huile",8]],min:20},
+ M6:{t:"M",n:"Dinde, pâtes complètes, épinards",i:[["dinde",120],["pates",200],["epinard",200],["huile",8]],min:20},
+ M7:{t:"M",n:"Tofu sauté, riz, poivrons, champignons",i:[["tofu",150],["riz",180],["poivron",150],["champi",100],["huile",8]],min:20},
+ M8:{t:"M",n:"Thon, pois chiches, salade-tomate",i:[["thon",100],["poischiche",150],["salade",80],["tomate",150],["huile",8]],min:10},
+ M9:{t:"M",n:"Crevettes, quinoa, brocoli",i:[["crevette",150],["quinoa",150],["brocoli",200],["huile",8]],min:15,price:1},
+ S1:{t:"S",n:"Cottage cheese + pomme",i:[["cott",150],["pomme",150]],min:2},
+ S2:{t:"S",n:"Skyr + fruits rouges",i:[["skyr",150],["rouges",100]],min:2},
+ S3:{t:"S",n:"Amandes + banane",i:[["amande",20],["banane",100]],min:2},
+ S4:{t:"S",n:"2 œufs durs + carottes",i:[["oeuf",120],["carotte",100]],min:12},
+ S5:{t:"S",n:"Yaourt au soja + noix",i:[["soja",150],["noix",15]],min:2},
+ B6:{t:"B",n:"Porridge d'avoine au soja, banane, chia",i:[["avoine",40],["sojabois",200],["banane",80],["chia",10]],min:10},
+ B7:{t:"B",n:"Tartine d'avocat, œuf, tomate",i:[["pain",60],["avocat",60],["oeuf",60],["tomate",80]],min:10},
+ B8:{t:"B",n:"Fromage blanc, myrtilles, graines de courge",i:[["fb",200],["myrtille",80],["courgraine",15]],min:5},
+ B9:{t:"B",n:"Smoothie skyr, fraises, banane, lin",i:[["skyr",200],["fraise",120],["lin",10],["banane",60]],min:5},
+ B10:{t:"B",n:"Œufs brouillés, jambon, pain sans gluten",i:[["oeuf",120],["jambon",40],["painsg",50]],min:10},
+ M10:{t:"M",n:"Sardines, pommes de terre, salade-betterave",i:[["sardine",100],["pdt",250],["salade",80],["betterave",100],["huile",5]],min:10,oily:1},
+ M11:{t:"M",n:"Maquereau, quinoa, haricots verts",i:[["maquereau",120],["quinoa",150],["haricot",200],["huile",5]],min:20,oily:1},
+ M12:{t:"M",n:"Truite, riz complet, asperges",i:[["truite",130],["rizcomplet",170],["asperge",200],["huile",5]],min:20,oily:1,price:1},
+ M13:{t:"M",n:"Merlu, courge rôtie, riz",i:[["merlu",150],["courge",250],["riz",150],["huile",8]],min:25},
+ M14:{t:"M",n:"Bœuf maigre, sarrasin, ratatouille",i:[["boeuf",120],["sarrasin",200],["aubergine",120],["courgette",120],["tomate",100],["huile",8]],min:30},
+ M15:{t:"M",n:"Tempeh, riz complet, brocoli",i:[["tempeh",120],["rizcomplet",170],["brocoli",200],["huile",8]],min:20},
+ M16:{t:"M",n:"Haricots rouges, œufs, riz, poivrons",i:[["harirouge",180],["oeuf",60],["riz",150],["poivron",120],["huile",8]],min:20},
+ M17:{t:"M",n:"Curry de pois chiches, riz, épinards",i:[["poischiche",180],["riz",150],["epinard",150],["tomate",100],["huile",8]],min:25},
+ M18:{t:"M",n:"Omelette aux légumes, salade, pain",i:[["oeuf",180],["champi",100],["poivron",80],["salade",60],["pain",40],["huile",8]],min:15},
+ M19:{t:"M",n:"Bowl poulet, avocat, quinoa",i:[["poulet",120],["avocat",60],["quinoa",150],["concombre",100],["tomate",80],["huile",5]],min:20},
+ M20:{t:"M",n:"Soupe de lentilles corail, œuf dur, pain",i:[["corail",200],["carotte",150],["oeuf",60],["pain",40],["huile",5]],min:25},
+ M21:{t:"M",n:"Dinde, boulgour, chou-fleur",i:[["dinde",120],["boulgour",180],["chouf",250],["huile",8]],min:25},
+ M22:{t:"M",n:"Poulet, patate douce, petits pois",i:[["poulet",120],["patate",200],["petitpois",120],["huile",8]],min:25},
+ M23:{t:"M",n:"Edamame, riz complet, légumes sautés",i:[["edamame",120],["rizcomplet",150],["carotte",100],["courgette",150],["huile",8]],min:20},
+ S6:{t:"S",n:"Houmous + carottes",i:[["houmous",50],["carotte",150]],min:2},
+ S7:{t:"S",n:"Edamame + poire",i:[["edamame",100],["poire",120]],min:5},
+ S8:{t:"S",n:"Fromage blanc, myrtilles, graines de courge",i:[["fb",150],["myrtille",60],["courgraine",10]],min:2},
+ S9:{t:"S",n:"Chocolat noir, amandes, orange",i:[["chocnoir",15],["amande",15],["orange",120]],min:2},
+ S10:{t:"S",n:"Poire + beurre de cacahuète",i:[["poire",150],["cacahuete",15]],min:2}
+};
+const DAYS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+const SLOTS={"3":[["B","Petit-déjeuner",.27],["M","Déjeuner",.38],["M","Dîner",.35]],
+ "3+1":[["B","Petit-déjeuner",.25],["M","Déjeuner",.33],["S","Collation",.12],["M","Dîner",.30]],
+ "3+2":[["B","Petit-déjeuner",.22],["S","Collation matin",.10],["M","Déjeuner",.30],["S","Collation après-midi",.10],["M","Dîner",.28]]};
+
+function tplFoods(id){return TPL[id].i.map(x=>F[x[0]])}
+function allowed(id){
+  const p=S.p,t=TPL[id],fs=tplFoods(id),tags=fs.flatMap(f=>f[5]);
+  if(p.regime==="vege"&&(tags.includes("meat")||tags.includes("fish")))return false;
+  if(p.regime==="pesco"&&tags.includes("meat"))return false;
+  if((p.sanslactose||p.laitages==="jamais"&&false)&&tags.includes("lactose"))return false;
+  if(p.sansgluten&&tags.includes("gluten"))return false;
+  if(p.budget&&t.price)return false;
+  if(+p.temps&&t.min>+p.temps)return false;
+  const ex=String(p.exclus||"").toLowerCase().split(",").map(x=>x.trim()).filter(Boolean);
+  const exw=ex.join(" ");
+  if(/poisson/.test(exw)&&tags.includes("fish"))return false;
+  if(/viande/.test(exw)&&tags.includes("meat"))return false;
+  if(/(oeuf|œuf)/.test(exw)&&tags.includes("egg"))return false;
+  if(/(lait|laitage)/.test(exw)&&tags.includes("lactose"))return false;
+  for(const f of fs){const n=f[0].toLowerCase();if(ex.some(e=>n.includes(e)||(e.length>3&&e.includes(n.split(" ")[0]))))return false}
+  return true;
+}
+function pool(type){return Object.keys(TPL).filter(k=>TPL[k].t===type&&allowed(k))}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function genWeek(){
+  const slots=SLOTS[S.p.repas]||SLOTS["3"];
+  const B=shuffle(pool("B")),Sn=shuffle(pool("S"));
+  let Mall=pool("M");
+  const oily=Mall.filter(k=>TPL[k].oily),Mnon=shuffle(Mall.filter(k=>!TPL[k].oily));
+  const M=Mnon.length?Mnon:shuffle(Mall);
+  const fr=Math.min(3,+S.p.poisson||0);
+  const oilyDays=oily.length&&fr?({1:[2],2:[1,4],3:[0,3,5]})[fr]:[];
+  const week=[];
+  for(let d=0;d<7;d++){
+    let mi=0;const meals=[];
+    slots.forEach((sl,si)=>{
+      let id;
+      if(sl[0]==="B")id=B[d%B.length];
+      else if(sl[0]==="S")id=Sn[(d+si)%Sn.length];
+      else{
+        const isDinner=sl[1]==="Dîner";
+        if(isDinner&&oilyDays.includes(d))id=oily[oilyDays.indexOf(d)%oily.length];
+        else{const base=S.p.batch?Math.floor(d/2)*2:d*2;id=M[(base+(isDinner?1:0))%M.length]}
+      }
+      meals.push({s:si,id});
+    });
+    week.push(meals);
+  }
+  return week;
+}
+function ensureWeek(){if(!S.week||S.week.length!==7||!S.week.every(d=>d.every(m=>TPL[m.id]&&(SLOTS[S.p.repas]||[]).length===d.length))){S.week=genWeek();save()}}
+function newWeek(){S.week=genWeek();S.shop={};save();renderMenus()}
+function swapMeal(d,si){
+  const slots=SLOTS[S.p.repas]||SLOTS["3"],type=slots[si][0];
+  const cur=S.week[d][si].id;let pl=pool(type).filter(k=>k!==cur&&!TPL[k].oily);
+  if(!pl.length)pl=pool(type).filter(k=>k!==cur);
+  if(!pl.length)return;
+  S.week[d][si].id=pl[Math.floor(Math.random()*pl.length)];save();renderMenus();
+  const dd=document.getElementById("day"+d);if(dd)dd.open=true;
+}
+function mealCalc(id,frac,target){
+  const items=TPL[id].i,base=items.reduce((a,x)=>a+F[x[0]][1]*x[1]/100,0);
+  const sc=Math.max(.6,Math.min(1.8,target*frac/base));
+  const rows=items.map(x=>{const g=Math.max(5,Math.round(x[1]*sc/5)*5);return{f:x[0],g,k:F[x[0]][1]*g/100,p:F[x[0]][2]*g/100}});
+  return{rows,k:rows.reduce((a,r)=>a+r.k,0),p:rows.reduce((a,r)=>a+r.p,0)};
+}
+function renderMenus(){
+  ensureWeek();
+  const k=calc(),slots=SLOTS[S.p.repas]||SLOTS["3"];
+  if(!Object.keys(TPL).some(i=>allowed(i)&&TPL[i].t==="M")){$("week").innerHTML='<div class="card"><div class="alert red">Aucune recette ne correspond à vos contraintes. Assouplissez les exclusions dans le Profil.</div></div>';$("shop").innerHTML="";return}
+  const tot={};let html="";
+  S.week.forEach((meals,d)=>{
+    let dk=0,dp=0;
+    const rows=meals.map((m,si)=>{
+      const c=mealCalc(m.id,slots[si][2],k.target);dk+=c.k;dp+=c.p;
+      c.rows.forEach(r=>tot[r.f]=(tot[r.f]||0)+r.g);
+      return `<div class="meal"><div class="row"><b>${slots[si][1]}</b><button class="btn sec noprint" style="padding:4px 10px" onclick="swapMeal(${d},${si})">⇄</button></div>
+      ${esc(TPL[m.id].n)}<br><small>${c.rows.map(r=>F[r.f][0]+" "+r.g+" g").join(" · ")}</small><br><small>≈ ${Math.round(c.k)} kcal · ${Math.round(c.p)} g protéines</small></div>`}).join("");
+    html+=`<details id="day${d}"><summary>${DAYS[d]} · ${Math.round(dk)} kcal · ${Math.round(dp)} g prot.</summary>${rows}${dp<k.prot*.9?'<div class="alert">Protéines un peu sous la cible : ajoutez une collation protéinée (skyr, œufs, cottage).</div>':""}</details>`;
+  });
+  $("week").innerHTML=html;
+  // courses
+  const per=Math.max(1,+S.p.foyer||1);
+  const cats={};let cost=0;
+  Object.keys(tot).forEach(f=>{const g=Math.ceil(tot[f]*per/10)*10,price=F[f][3]*g/1000;cost+=price;(cats[F[f][4]]=cats[F[f][4]]||[]).push([f,g,price])});
+  $("shop").innerHTML=`<h2>🛒 Liste de courses</h2><p><b>Coût estimé : ${cost.toFixed(2).replace(".",",")} €</b> <span class="note">(≈ ${(cost/7).toFixed(2).replace(".",",")} €/jour, prix indicatifs${per>1?", "+per+" personnes":""})</span></p>`+
+   Object.keys(cats).sort().map(c=>`<h3>${c}</h3>`+cats[c].map(x=>`<label class="chk ${S.shop[x[0]]?"done":""}"><input type="checkbox" ${S.shop[x[0]]?"checked":""} onchange="toggleShop('${x[0]}',this.checked)">${F[x[0]][0]} — ${x[1]>=1000?(x[1]/1000).toFixed(2).replace(".",",")+" kg":x[1]+" g"}</label>`).join("")).join("");
+  renderFeel();renderGlp1Menu();renderFoods();
+}
+function toggleShop(f,v){if(v)S.shop[f]=true;else delete S.shop[f];save();renderMenus()}
+function renderFeel(){
+  const l=S.logs.filter(x=>x.faim).sort((a,b)=>a.date<b.date?1:-1).slice(0,3);
+  if(l.length<3){$("feel").innerHTML=`<p class="note">${l.length}/3 jours renseignés dans le suivi.</p>`;return}
+  const m=k=>l.reduce((a,x)=>a+(+x[k]||0),0)/l.length;
+  const r=[];
+  if(m("faim")>=4)r.push("Faim élevée : ajoutez une collation riche en protéines et fibres (+150 à 200 kcal), répartissez mieux les protéines.");
+  if(m("sati")<=2)r.push("Satiété faible : plus de fibres (légumes, légumineuses) et de protéines au petit-déjeuner.");
+  if(m("dig")<=2.5)r.push("Digestion difficile : repas plus petits et moins gras, mangez lentement, évitez les boissons gazeuses.");
+  if(m("ener")<=2)r.push("Énergie basse : vérifiez l'apport calorique réel, le sommeil et les analyses (fer, B12, vitamine D, TSH).");
+  if(!r.length)r.push("Tout semble bien équilibré : gardez le cap.");
+  $("feel").innerHTML=r.map(t=>`<div class="alert green">${t}</div>`).join("");
+}
+
+/* ---------- SUIVI ---------- */
+function addLog(){
+  const d=$("sd").value||today();
+  const e={date:d,poids:parseFloat($("sp").value)||null,faim:+$("sf").value,sati:+$("ss").value,dig:+$("sg").value,ener:+$("se").value,
+    sommeil:parseFloat($("sh").value)||null,act:parseFloat($("sa").value)||null,note:$("sn").value.trim(),
+    humeur:+$("sm").value,stress:+$("sst").value,tour:parseFloat($("stl").value)||null,tens:$("st").value.trim(),inj:$("sinj").checked,dose:$("sid").value.trim(),
+    sym:[...document.querySelectorAll("#symlog input:checked")].map(x=>x.dataset.s)};
+  if(e.tour)S.p.tour=e.tour;
+  S.logs=S.logs.filter(x=>x.date!==d);S.logs.push(e);
+  if(e.poids&&d>=today())S.p.poids=e.poids;
+  save();renderSuivi();
+}
+function delLog(d){S.logs=S.logs.filter(x=>x.date!==d);save();renderSuivi()}
+function renderSuivi(){
+  if(!$("sd").value)$("sd").value=today();
+  renderSymLog();renderSymSum();
+  const L=S.logs.slice().sort((a,b)=>a.date<b.date?1:-1);
+  $("logs").innerHTML=L.length?`<table>${L.map(x=>`<tr><td>${frDate(x.date)}</td><td>${x.poids?x.poids+" kg":"–"}</td><td><small>faim ${x.faim} · sat. ${x.sati} · dig. ${x.dig} · én. ${x.ener}${x.sommeil?" · "+x.sommeil+" h":""}${x.act?" · "+x.act+" min":""}${x.humeur?" · humeur "+x.humeur:""}${x.stress?" · stress "+x.stress:""}${x.tour?" · taille "+x.tour+" cm":""}${x.tens?" · TA "+esc(x.tens):""}${x.inj?"<br>💉 injection"+(x.dose?" ("+esc(x.dose)+")":""):""}${x.sym&&x.sym.length?"<br>"+x.sym.map(k=>(SYM.find(s=>s[0]===k)||[0,k])[1]).join(", "):""}${x.note?"<br>"+esc(x.note):""}</small></td><td><a href="#" onclick="delLog('${x.date}');return false">✕</a></td></tr>`).join("")}</table>`:'<p class="note">Aucune entrée.</p>';
+  const pts=S.logs.filter(x=>x.poids).sort((a,b)=>a.date>b.date?1:-1);
+  if(pts.length<2){$("chart").innerHTML='<p class="note">Ajoutez au moins 2 pesées pour voir la courbe.</p>';return}
+  const W=320,H=150,pad=28,ws=pts.map(x=>x.poids),mn=Math.min(...ws)-1,mx=Math.max(...ws)+1;
+  const X=i=>pad+i*(W-pad*2)/(pts.length-1),Y=v=>H-pad-(v-mn)/(mx-mn)*(H-pad*2);
+  $("chart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%"><polyline fill="none" stroke="#9b7bff" stroke-width="2.5" points="${pts.map((x,i)=>X(i)+","+Y(x.poids)).join(" ")}"/>
+  ${pts.map((x,i)=>`<circle cx="${X(i)}" cy="${Y(x.poids)}" r="3.5" fill="#e5408f"/>`).join("")}
+  <text x="4" y="${Y(mx-1)+4}">${(mx-1).toFixed(0)}</text><text x="4" y="${Y(mn+1)+4}">${(mn+1).toFixed(0)}</text>
+  <text x="${pad}" y="${H-6}">${frDate(pts[0].date).slice(0,5)}</text><text x="${W-pad-24}" y="${H-6}">${frDate(pts[pts.length-1].date).slice(0,5)}</text></svg>
+  <p class="note">Variation : ${(ws[ws.length-1]-ws[0]).toFixed(1)} kg depuis le ${frDate(pts[0].date)}</p>`;
+}
+
+/* ---------- EXPORT / IMPORT ---------- */
+function exportData(){
+  const b=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="mon-programme-sante-"+today()+".json";a.click();
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{try{S=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(r.result));save();location.reload()}catch(x){alert("Fichier invalide")}};r.readAsText(f);
+}
+
+/* ---------- EXTENSIONS ---------- */
+const MED=[["levo","Lévothyroxine (thyroïde)"],["metformine","Metformine"],["insuline","Insuline ou sulfamides hypoglycémiants"],["anticoag","Anticoagulants"],["statine","Statine (cholestérol)"],["antihta","Traitement de l'hypertension"],["antidep","Antidépresseurs / anxiolytiques"],["ipp","Anti-acides (IPP : oméprazole…)"],["cortico","Corticoïdes"]];
+const GROUPS=["Essentiels","Minéraux & vitamines","Thyroïde & glycémie","Lipides","Foie, reins, pancréas, inflammation","Autres"];
+const BGRP={hb:0,vgm:0,ferr:0,vitd:0,b12:0,fol:0,zinc:1,mgs:1,ca:1,k:1,na:1,se:1,homocy:1,tsh:2,t4l:2,tpo:2,gly:2,hba1c:2,ins:2,chol:3,ldl:3,hdl:3,tg:3,alat:4,asat:4,ggt:4,lipase:4,creat:4,dfg:4,urate:4,crp:4};
+const HINT={
+ hb:{lo:"Peut traduire une anémie (fer, B12, folates…) : à explorer avec le médecin."},
+ ferr:{lo:"Réserves de fer basses : fatigue, chute de cheveux ; cause à chercher (règles, alimentation…).",hi:"Souvent inflammation, foie ou surcharge : avis médical."},
+ vitd:{lo:"Insuffisance fréquente en hiver : supplémentation à encadrer par le médecin."},
+ b12:{lo:"À explorer (alimentation, anti-acides, metformine) : fatigue, fourmillements."},
+ fol:{lo:"Apport insuffisant en légumes verts / légumineuses ou autre cause : avis médical."},
+ tsh:{lo:"Peut évoquer une hyperthyroïdie : avis médical.",hi:"Peut évoquer une hypothyroïdie (fatigue, frilosité, prise de poids) : avis médical."},
+ gly:{hi:"Glycémie à jeun élevée : à confirmer et à discuter (HbA1c)."},
+ hba1c:{hi:"Au-dessus du repère : suivi de la glycémie à discuter avec le médecin."},
+ ldl:{hi:"LDL élevé : alimentation, activité et risque cardiovasculaire global à évaluer."},
+ hdl:{lo:"HDL bas : activité physique, alimentation, arrêt du tabac."},
+ tg:{hi:"Triglycérides élevés : sucres rapides, alcool, surpoids ; contrôle à jeun."},
+ crp:{hi:"Inflammation ou infection possible : à recontrôler avec le médecin."},
+ alat:{hi:"Foie : alcool, graisse hépatique, médicaments ; à discuter."},
+ asat:{hi:"Foie ou muscle (effort récent) : à recontrôler."},
+ ggt:{hi:"Alcool, foie, médicaments : à discuter."},
+ lipase:{hi:"Avec un GLP-1, signalez toute douleur abdominale ; avis médical rapide."},
+ creat:{hi:"Rein ou déshydratation : à contrôler, surtout sous GLP-1 ou créatine."},
+ dfg:{lo:"Filtration rénale réduite : avis médical avant tout complément ou apport élevé en protéines."},
+ k:{lo:"Peut venir de diarrhées / vomissements : avis médical.",hi:"À contrôler rapidement avec le médecin."},
+ na:{lo:"Sodium bas : avis médical (excès d'eau, médicaments, diarrhées).",hi:"Souvent déshydratation : boire, avis médical."},
+ mgs:{lo:"Magnésium bas : alimentation riche en magnésium, avis médical (diarrhées, IPP)."},
+ zinc:{lo:"Zinc bas : alimentation insuffisante ; lien possible avec cheveux, peau, immunité."},
+ homocy:{hi:"Souvent lié à un manque de B12 / B9 : à explorer."},
+ urate:{hi:"Risque de goutte : hydratation, limiter alcool et boissons sucrées."},
+ tpo:{hi:"Anticorps anti-thyroïde : évoque une thyroïdite auto-immune (Hashimoto) : suivi médical."},
+ ins:{hi:"Insuline élevée : insulinorésistance possible ; à discuter."},
+ ca:{lo:"Calcium bas : avis médical (vitamine D, parathyroïdes).",hi:"Calcium élevé : avis médical."},
+ testo:{lo:"Taux bas : à interpréter avec le médecin (sommeil, poids, médicaments).",hi:"Taux élevé : à interpréter avec le médecin."}
+};
+function groupedForm(){
+  const sx=S.p.sexe==="H"?"H":"F";
+  const row=b=>{const r=b[3][sx];return `<div class="bil"><div>${b[1]}<br><span class="note">repère ${r[0]}–${r[1]} ${b[2]}</span></div><input type="number" step="any" id="b_${b[0]}" value="${bilDraft[b[0]]??""}"><span class="note">${b[2]}</span></div>`};
+  return GROUPS.map((g,i)=>{const l=BIL.filter(b=>GROUPS[BGRP[b[0]]==null?5:BGRP[b[0]]]===g);return l.length?`<details ${i===0?"open":""}><summary>${g}</summary>${l.map(row).join("")}</details>`:""}).join("");
+}
+function renderBilSuggest(){
+  const el=$("bilsug");if(!el)return;
+  const c=S.cond,s=S.sym,m=S.med||{};
+  const want=new Set(["hb","ferr","vitd","b12","tsh","gly","ldl","hdl","tg","alat","creat","crp"]);
+  const add=a=>a.forEach(x=>want.add(x));
+  if(c.glp1)add(["hba1c","dfg","vgm","zinc"]);
+  if(c.diabete||c.sopk)add(["hba1c","ins","dfg"]);
+  if(c.hashimoto||m.levo)add(["t4l","tpo"]);
+  if(s.fatigue||s.cheveux)add(["fol","zinc","homocy"]);
+  if(c.osteo)add(["ca","mgs"]);
+  if(c.hta||m.antihta)add(["k","na","dfg"]);
+  if(c.sopk)add(["testo"]);
+  if(c.chol||m.statine)add(["chol","asat","ggt"]);
+  if(c.foie)add(["asat","ggt"]);
+  if(c.rein)add(["dfg","k","na","ca"]);
+  if(S.pep&&S.pep.length)add(["hba1c","ins","asat","ggt","dfg"]);
+  if(m.ipp)add(["mgs","b12"]);
+  if(m.metformine)add(["b12","dfg"]);
+  const bl=latestBilan()||{};
+  el.innerHTML=BIL.filter(b=>want.has(b[0])).map(b=>`<span class="pill ${bl[b[0]]!=null?"ok":"lo"}" style="margin:3px 4px 3px 0">${bl[b[0]]!=null?"✔ ":""}${b[1]}</span>`).join("");
+}
+function extraAlerts(al){
+  const c=S.cond,m=S.med||{},bl=latestBilan()||{};
+  if(c.glp1&&c.mtc)al.push(["red","GLP-1 + antécédent (perso ou familial) de cancer médullaire de la thyroïde / MEN2 : contre-indication habituelle. Parlez-en à votre médecin."]);
+  if(c.glp1&&c.pancreatite)al.push(["red","GLP-1 + antécédent de pancréatite : situation à risque, à discuter avec le médecin prescripteur."]);
+  if(c.glp1&&c.tca)al.push(["red","GLP-1 + antécédent de troubles du comportement alimentaire : suivi médical et psychologique indispensable."]);
+  if(c.glp1&&m.insuline)al.push(["red","GLP-1 + insuline ou sulfamides : risque d'hypoglycémie, doses à adapter avec votre médecin."]);
+  if(c.glp1&&c.grossesse)al.push(["red","GLP-1 et grossesse / allaitement / projet de grossesse : à discuter avec le médecin avant toute poursuite."]);
+  if(c.glp1&&c.calculs)al.push(["","Calculs biliaires : une perte de poids rapide augmente le risque de crise ; signalez toute douleur sous les côtes à droite."]);
+  if(c.glp1&&c.contraception)al.push(["","Contraception orale et tirzépatide : une méthode complémentaire est recommandée au début et après chaque augmentation de dose (selon la notice)."]);
+  if(c.apnee)al.push(["","Apnée du sommeil : la perte de poids aide ; continuez le traitement prescrit (ex. PPC) et suivez-le avec le médecin."]);
+  if(c.chol)al.push(["","Cholestérol élevé : fibres solubles (avoine, légumineuses), poissons gras, moins de graisses saturées, activité régulière."]);
+  if(c.rgo)al.push(["","RGO : repas plus petits, dîner tôt, limiter gras, café, alcool, menthe ; surélever la tête du lit."]);
+  if(c.meno)al.push(["","Ménopause : protéines et calcium, renforcement musculaire, vitamine D ; discutez du traitement hormonal avec le médecin si gêne."]);
+  if(m.antidep)al.push(["","Antidépresseurs : évitez le millepertuis et parlez-en avant tout complément."]);
+  if(c.glp1&&bl.lipase!=null&&flag("lipase",bl.lipase)==="hi")al.push(["red","Lipase élevée sous GLP-1 : contactez rapidement votre médecin."]);
+}
+function glp1Extra(){
+  const k=calc(),p=S.p;
+  const last=(S.logs||[]).filter(x=>x.inj).sort((a,b)=>a.date<b.date?1:-1)[0];
+  let h=`<div class="card"><h2>💉 Mon suivi GLP-1</h2><table>
+   <tr><td>Molécule</td><td>${esc(p.glp1mol||"non renseignée")}</td></tr>
+   <tr><td>Début</td><td>${p.glp1date?frDate(p.glp1date):"–"}</td></tr>
+   <tr><td>Jour d'injection habituel</td><td>${esc(p.glp1jour||"–")}</td></tr>
+   <tr><td>Dose notée</td><td>${esc(p.glp1dose||"–")}</td></tr>
+   <tr><td>Dernière injection notée</td><td>${last?frDate(last.date):"–"}</td></tr></table>
+   <p class="note">Dose, augmentation, oubli d'une injection et arrêt : uniquement selon la notice et l'avis de votre médecin ou pharmacien.</p></div>`;
+  h+=`<div class="card"><h2>🩺 GLP-1 : effets, gestion et vigilance</h2>
+  <h3>Les grandes étapes</h3>
+  <p>Instauration puis augmentation progressive (décidée par le médecin), phase d'entretien, puis arrêt éventuel. La reprise de poids est fréquente à l'arrêt : consolidez dès maintenant protéines, musculation et habitudes alimentaires.</p>
+  <h3>Effets fréquents et astuces</h3><table>
+  <tr><td>Nausées</td><td>Petits repas, aliments tièdes ou froids, éviter le gras, gingembre, manger lentement.</td></tr>
+  <tr><td>Reflux</td><td>Dîner léger et tôt, ne pas s'allonger pendant 2–3 h, limiter café, alcool, menthe.</td></tr>
+  <tr><td>Constipation</td><td>Eau, fibres progressives, marche, kiwi ; avis du pharmacien si persistante.</td></tr>
+  <tr><td>Diarrhée</td><td>Hydratation, limiter gras, lactose et édulcorants ; électrolytes si besoin.</td></tr>
+  <tr><td>Fatigue</td><td>Protéines à chaque repas, sommeil, contrôle fer, B12, vitamine D, TSH.</td></tr>
+  <tr><td>Chute de cheveux</td><td>Fréquente lors d'une perte de poids rapide ; protéines, fer, zinc à vérifier.</td></tr>
+  <tr><td>Perte de muscle</td><td>≈ ${k.prot} g de protéines/jour + renforcement 2–3 fois par semaine ; suivez tour de taille et force, pas seulement le poids.</td></tr></table>
+  <h3>Signes d'alerte : consultez vite</h3>
+  <div class="alert red"><ul>
+  <li>Douleur abdominale intense et persistante (parfois dans le dos), avec ou sans vomissements : possible pancréatite.</li>
+  <li>Douleur sous les côtes à droite, fièvre, jaunisse : vésicule biliaire.</li>
+  <li>Vomissements répétés, impossibilité de boire, vertiges, urines très foncées : déshydratation.</li>
+  <li>Gonflement du cou, voix enrouée persistante, difficulté à avaler.</li>
+  <li>Malaise, sueurs, tremblements si vous prenez aussi de l'insuline ou un sulfamide : hypoglycémie.</li>
+  <li>Éruption, gonflement du visage, gêne respiratoire : réaction allergique (15 ou 112).</li></ul></div>
+  <h3>À signaler à votre médecin</h3><ul>
+  <li>Antécédent personnel ou familial de cancer médullaire de la thyroïde (MEN2), de pancréatite ou de calculs biliaires.</li>
+  <li>Grossesse, allaitement ou projet de grossesse.</li>
+  <li>Contraception orale : avec le tirzépatide, une méthode complémentaire est recommandée au début et après chaque augmentation de dose (selon la notice).</li>
+  <li>Autres médicaments : l'absorption des comprimés peut changer (lévothyroxine…) ; insuline et sulfamides à ajuster.</li>
+  <li>Toute intervention ou endoscopie : prévenir l'équipe (risque d'estomac plein sous anesthésie).</li></ul>
+  <h3>Suivi biologique utile</h3><p>Glycémie / HbA1c, bilan lipidique, créatinine (DFG), ALAT, ferritine, B12, vitamine D ; lipase en cas de douleur abdominale.</p>
+  <h3>Rythme de perte</h3><p>Visez environ 0,5 à 1 kg par semaine ; une perte plus rapide et prolongée est à signaler pour ajuster traitement et alimentation.</p>
+  <h3>Approvisionnement</h3><p>Uniquement en pharmacie, sur ordonnance : des contrefaçons de stylos ont été signalées. Un stylo ne se partage pas ; respectez la conservation indiquée sur la notice.</p></div>`;
+  return h;
+}
+function lifeCards(){
+  const k=calc(),a=+S.p.age,Fm=S.p.sexe==="F",c=S.cond,p=[];
+  p.push("Tension artérielle, poids et tour de taille : au moins 1 fois par an.");
+  p.push("Bilan sanguin annuel : glycémie, lipides, reins, foie, thyroïde selon avis.");
+  p.push("Vaccinations : grippe et Covid en automne (selon éligibilité), rappels à jour (dTP).");
+  if(Fm&&a>=25&&a<=65)p.push("Cancer du col de l'utérus : frottis / test HPV selon le calendrier recommandé.");
+  if(Fm&&a>=50&&a<=74)p.push("Mammographie de dépistage tous les 2 ans.");
+  else if(Fm)p.push("Dépistage du cancer du sein : organisé à partir de 50 ans, plus tôt si antécédents familiaux.");
+  if(a>=50&&a<=74)p.push("Test de dépistage du cancer colorectal tous les 2 ans.");
+  else p.push("Cancer colorectal : dépistage organisé à partir de 50 ans, plus tôt en cas d'antécédents ou de symptômes.");
+  if(!Fm&&a>=50)p.push("Prostate : discussion avec le médecin sur l'intérêt du dosage de PSA.");
+  p.push("Peau : surveiller les grains de beauté ; dentiste 1 fois par an.");
+  if(c.diabete)p.push("Diabète : fond d'œil, soins des pieds, dosage de microalbuminurie selon le suivi prescrit.");
+  if(c.osteo||(Fm&&a>=50))p.push("Ostéodensitométrie selon avis médical.");
+  return `<div class="card"><h2>🛡️ Prévention &amp; dépistage</h2><ul>${p.map(x=>`<li>${x}</li>`).join("")}</ul><p class="note">Calendrier indicatif (France) : votre médecin adapte selon vos antécédents.</p></div>
+  <div class="card"><h2>💧 Hydratation &amp; hygiène de vie</h2><ul>
+   <li>Eau : ≈ ${k.eau} L/jour (plus en cas d'effort, de chaleur, de diarrhées ou de GLP-1) ; urines claires = bon repère.</li>
+   <li>Alcool : le moins possible, jamais tous les jours ; avec un GLP-1 il aggrave nausées, reflux et risque d'hypoglycémie.</li>
+   <li>Tabac : l'arrêt reste le geste santé n° 1 (Tabac info service : 3989).</li>
+   <li>Sédentarité : se lever 3 min chaque heure, viser 7 000 à 10 000 pas par jour.</li></ul></div>
+  <div class="card"><h2>🧠 Stress &amp; santé mentale</h2>
+   <p>Respiration lente 5 min, marche, lumière du matin, écrans et actualités limités le soir, lien social. Humeur basse plus de 2 semaines, anxiété invalidante ou idées noires : parlez-en rapidement à un médecin ; en France, le 3114 est joignable 24 h/24.</p></div>
+  <div class="card"><h2>🚨 Quand consulter en urgence</h2>
+   <div class="alert red">Douleur thoracique, essoufflement brutal, malaise, faiblesse d'un côté du corps ou trouble de la parole : appelez le 15 ou le 112.</div>
+   <div class="alert">Consultez sans attendre : douleur abdominale intense, vomissements répétés, impossibilité de boire, fièvre persistante, jaunisse, perte de poids très rapide.</div></div>`;
+}
+function extraSupp(out,f,bl,c,s){
+  const m=S.med||{},p=S.p;
+  const add=(n,t,g)=>{if(!out.some(o=>o[0]===n))out.push([n,t,g||""])};
+  if(f("zinc")==="lo"||s.cheveux)add("Zinc","Valeur basse ou chute de cheveux : cure courte possible ; ne pas dépasser 25 mg/j au total (multivitamines comprises).");
+  if(f("mgs")==="lo")add("Magnésium (bilan bas)","Magnésium sanguin bas : alimentation riche en magnésium, complément selon avis médical ; à distance de la lévothyroxine.");
+  if(c.hashimoto||m.levo)add("Sélénium","Parfois proposé en cas d'anticorps anti-TPO élevés : avis médical ; ne pas dépasser 200 µg/j sans avis.");
+  if((c.glp1||p.objectif==="muscle")&&!c.rein&&!c.foie)add("Créatine monohydrate","≈ 3 g/j : l'un des compléments les mieux étudiés pour la force et la masse maigre. Bien s'hydrater ; à éviter en cas de maladie des reins.");
+  if(s.constip||c.glp1)add("Psyllium (fibres solubles)","À augmenter très progressivement avec beaucoup d'eau, à 2 h des médicaments ; peut ballonner.");
+  if(c.glp1||s.diarrhee||s.vomit||s.crampes)add("Électrolytes (réhydratation)","En cas de diarrhée, vomissements ou très faible appétit ; prudence avec le sodium si hypertension.");
+  if(c.glp1)add("Multivitamines-minéraux simple","Peut combler un apport faible quand on mange peu ; choisir sans excès et sans biotine à forte dose avant un bilan.");
+  if(s.ballon||s.diarrhee||s.constip)add("Probiotiques","Bénéfice modeste et variable selon les souches : essai de 4 semaines, à arrêter si inefficace.");
+  if(s.articul||s.peau||s.cheveux)add("Peptides de collagène","Preuves modestes (peau, articulations) ; associer protéines et vitamine C alimentaire.");
+  if(s.nausee)add("Gingembre","Peut atténuer les nausées (tisane ou gélule selon la notice) ; prudence avec les anticoagulants.");
+  if(s.spm)add("Vitamine B6","Parfois utilisée dans le SPM ; ne pas dépasser 25 mg/j sans avis (risque de neuropathie).");
+  if(s.sommeil)add("Mélatonine","Faible dose, courte durée, 1 h avant le coucher ; demander conseil au pharmacien.");
+  if(s.sommeil||s.stress)add("Glycine ou L-théanine","Options douces pour le sommeil et le stress ; preuves limitées.");
+  if(s.stress&&!c.hashimoto&&!c.foie&&!c.grossesse)add("Ashwagandha","Peut aider le stress mais déconseillée avec thyroïde, foie ou grossesse (atteintes hépatiques rapportées) : avis médical.");
+  if(c.sopk)add("Myo-inositol","Utilisé dans le SOPK (insulinorésistance, cycles) ; preuves modérées ; avis médical.");
+  if(m.statine)add("Coenzyme Q10","Parfois essayée en cas de douleurs musculaires sous statine ; preuves mitigées : avis médical.");
+  if(c.osteo&&!m.anticoag)add("Vitamine K2","Associée à la vitamine D et au calcium, intérêt encore discuté ; contre-indiquée avec certains anticoagulants.");
+  if(s.articul&&!c.calculs&&!m.anticoag)add("Curcuma / curcumine","Peut soulager les douleurs articulaires ; éviter avec calculs biliaires ou anticoagulants ; rares atteintes du foie.");
+  if(c.diabete||f("gly")==="hi"||f("hba1c")==="hi")add("⚠ Berbérine","Souvent vantée pour la glycémie mais interactions nombreuses (metformine, GLP-1, statines) et troubles digestifs : à éviter sans avis médical.");
+  if(s.cheveux)add("⚠ Biotine","Peu d'intérêt sans carence et elle fausse certains dosages (thyroïde, troponine) : arrêter au moins 3 jours avant une prise de sang.");
+  if(m.anticoag)add("⚠ Anticoagulants","Avis avant vitamine K, oméga-3 à forte dose, curcuma, gingembre, millepertuis, ginkgo.");
+  if(m.antidep||c.contraception)add("⚠ Millepertuis","À éviter : interactions avec antidépresseurs et contraceptifs.");
+  if(m.ipp)add("IPP (anti-acides)","Au long cours, ils réduisent l'absorption de B12, magnésium, fer et calcium (carbonate) : surveiller ces valeurs, préférer le calcium citrate.");
+  if(f("homocy")==="hi")add("Folates / B12","Homocystéine élevée : contrôler B12 et folates avec le médecin.");
+  if(f("ferr")==="lo"||c.anemie)add("Vitamine C alimentaire","Kiwi, agrumes, poivron avec les repas riches en fer pour améliorer son absorption.");
+}
+function addPep(){
+  const n=$("pn").value.trim();if(!n)return;
+  S.pep.push({n,o:$("po").value,d:$("pd").value,note:$("pnt").value.trim()});
+  $("pn").value=$("pnt").value="";save();renderPep();
+}
+function delPep(i){S.pep.splice(i,1);save();renderPep()}
+function renderPep(){
+  const c=S.cond;let al="";
+  if(c.seinK||c.mtc)al+=`<div class="alert red">Antécédent de cancer : évitez tout peptide « de recherche » (BPC-157, stimulants de l'hormone de croissance…) sans l'avis de votre oncologue.</div>`;
+  if(c.glp1&&S.pep.length)al+=`<div class="alert">GLP-1 + autres peptides déclarés : n'associez pas plusieurs produits actifs sur l'appétit, la glycémie ou l'hormone de croissance sans médecin.</div>`;
+  $("pepalerts").innerHTML=al;
+  $("peplist").innerHTML=S.pep.length?"<table>"+S.pep.map((x,i)=>{
+    const warn=x.o==="Achat sans ordonnance"?`<div class="alert red" style="margin:4px 0">Origine non contrôlée : pureté, dosage et stérilité non garantis. À signaler à un médecin ; bilan de base conseillé.</div>`:"";
+    return `<tr><td><b>${esc(x.n)}</b><br><small class="note">${esc(x.o)}${x.d?" · depuis "+frDate(x.d):""}</small>${warn}${x.note?"<br><small>"+esc(x.note)+"</small>":""}</td><td class="noprint"><a href="#" onclick="delPep(${i});return false">✕</a></td></tr>`}).join("")+"</table>":`<p class="note">Aucun produit noté.</p>`;
+}
+function allFoods(){
+  const a=Object.keys(F).map(k=>({id:k,n:F[k][0],k:F[k][1],p:F[k][2],pr:F[k][3],c:F[k][4],my:0}));
+  return a.concat((S.myfoods||[]).map((x,i)=>({id:"my"+i,n:x.n,k:x.k,p:x.p,pr:x.pr||0,c:"Mes aliments",my:1,i})));
+}
+function renderFoods(){
+  if(!$("fres"))return;
+  const q=($("fsearch").value||"").toLowerCase(),all=allFoods();
+  const l=all.filter(x=>!q||x.n.toLowerCase().includes(q)||x.c.toLowerCase().includes(q));
+  $("fcount").textContent="("+all.length+")";
+  $("fres").innerHTML="<table><tr><th>Aliment</th><th>kcal</th><th>prot.</th><th>€/kg</th></tr>"+l.map(x=>`<tr><td>${x.my?"⭐ ":""}${esc(x.n)}</td><td>${x.k}</td><td>${x.p}</td><td>${x.pr||"–"}${x.my?` <a href="#" onclick="delFood(${x.i});return false">✕</a>`:""}</td></tr>`).join("")+"</table>";
+  const sel=$("csel"),cur=sel.value;
+  sel.innerHTML=all.map(x=>`<option value="${x.id}">${esc(x.n)}</option>`).join("");
+  if(cur)sel.value=cur;
+  calcFood();
+}
+function calcFood(){
+  const f=allFoods().find(x=>x.id===$("csel").value),g=+$("cg").value||0;
+  $("cout").textContent=f?`${Math.round(f.k*g/100)} kcal · ${(f.p*g/100).toFixed(1)} g de protéines`:"";
+}
+function addFood(){
+  const n=$("fn").value.trim(),k=parseFloat($("fk").value),p=parseFloat($("fp").value)||0,pr=parseFloat($("fpr").value)||0;
+  if(!n||isNaN(k)){alert("Nom et kcal / 100 g requis.");return}
+  S.myfoods.push({n,k,p,pr});$("fn").value=$("fk").value=$("fp").value=$("fpr").value="";save();renderFoods();
+}
+function delFood(i){S.myfoods.splice(i,1);save();renderFoods()}
+function renderGlp1Menu(){
+  const el=$("glp1menu");if(!el)return;
+  if(!S.cond.glp1){el.innerHTML="";return}
+  const k=calc();
+  el.innerHTML=`<div class="card"><h2>💉 Menus et GLP-1</h2><ul>
+  <li>4 à 5 petits repas, protéines en premier, s'arrêter dès les premiers signes de satiété.</li>
+  <li>Bien tolérés : yaourt / skyr, œufs, poisson blanc, volaille, soupes, riz, pommes de terre, compotes, tofu.</li>
+  <li>À limiter : fritures, plats en sauce gras, charcuterie, pâtisseries, alcool, boissons gazeuses, gros volumes de crudités le soir.</li>
+  <li>Boire entre les repas plutôt que pendant ; viser ≈ ${k.eau} L/jour.</li>
+  <li>Objectif protéines : ${k.prot} g/jour ; si l'appétit manque, protéines d'abord, le reste ensuite.</li>
+  <li>Nausées fortes : repas froids ou tièdes, petites portions, gingembre ; inutile de forcer les calories.</li></ul></div>`;
+}
+function renderSymLog(){
+  const el=$("symlog");if(!el||el.dataset.done)return;el.dataset.done="1";
+  el.innerHTML=SYM.map(c=>`<label class="chk ${c[2]?"f":""}"><input type="checkbox" data-s="${c[0]}">${c[1]}</label>`).join("");
+}
+function renderSymSum(){
+  const el=$("symsum");if(!el)return;
+  const since=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
+  const cnt={};
+  S.logs.filter(x=>x.date>=since).forEach(x=>(x.sym||[]).forEach(k=>cnt[k]=(cnt[k]||0)+1));
+  const keys=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+  const inj=S.logs.filter(x=>x.inj).sort((a,b)=>a.date<b.date?1:-1)[0];
+  let h="";
+  if(inj)h+=`<p>💉 Dernière injection notée : <b>${frDate(inj.date)}</b>${S.p.glp1jour?" · jour habituel : "+esc(S.p.glp1jour):""}</p>`;
+  if(keys.length)h+=`<h3>Symptômes des 14 derniers jours</h3><table>${keys.map(k=>`<tr><td>${(SYM.find(s=>s[0]===k)||[0,k])[1]}</td><td>${cnt[k]} jour${cnt[k]>1?"s":""}</td><td>${cnt[k]>=5?'<span class="pill hi">persistant : à signaler</span>':""}</td></tr>`).join("")}</table>`;
+  el.innerHTML=h?`<div class="card"><h2>🔎 Synthèse</h2>${h}</div>`:"";
+}
+
+/* ---------- EXPORT / IMPORT ANALYSES ---------- */
+function dlFile(name,txt,type){
+  const b=new Blob([txt],{type:type+";charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();
+}
+function dlBilans(fmt){
+  if(!S.bilans.length){$("impmsg").textContent="Aucun bilan à télécharger pour l'instant.";return}
+  const L=S.bilans.slice().sort((a,b)=>a.date<b.date?-1:1);
+  if(fmt==="json"){dlFile("mes-analyses-"+today()+".json",JSON.stringify({type:"analyses",bilans:L},null,2),"application/json");return}
+  const rows=["date;code;marqueur;valeur;unite;repere_bas;repere_haut;statut"];
+  const sx=S.p.sexe==="H"?"H":"F";
+  L.forEach(bl=>BIL.forEach(b=>{
+    if(bl[b[0]]==null)return;
+    const r=b[3][sx],f=flag(b[0],bl[b[0]]);
+    rows.push([bl.date,b[0],b[1],String(bl[b[0]]).replace(".",","),b[2],r[0],r[1],f==="ok"?"dans le repère":f==="lo"?"bas":"élevé"].join(";"));
+  }));
+  dlFile("mes-analyses-"+today()+".csv","﻿"+rows.join("\r\n"),"text/csv");
+  $("impmsg").textContent="Fichier téléchargé ✔";
+}
+function dlTemplate(){
+  const rows=["date;code;marqueur;valeur;unite"];
+  BIL.forEach(b=>rows.push([today(),b[0],b[1],"",b[2]].join(";")));
+  dlFile("modele-analyses.csv","﻿"+rows.join("\r\n"),"text/csv");
+}
+function normDate(s){
+  s=String(s||"").trim();
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+"-"+m[2]+"-"+m[3];
+  m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);if(m)return m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");
+  return "";
+}
+function normKey(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,"")}
+function findMarker(s){
+  const k=normKey(s);if(!k)return null;
+  const m=BIL.find(b=>b[0]===s||normKey(b[0])===k||normKey(b[1])===k);
+  return m?m[0]:null;
+}
+function mergeBilans(list){
+  let nb=0,nv=0;
+  list.forEach(d=>{
+    if(!d.date)return;
+    const keys=Object.keys(d).filter(k=>k!=="date"&&d[k]!==""&&d[k]!=null&&!isNaN(d[k]));
+    if(!keys.length)return;
+    let ex=S.bilans.find(x=>x.date===d.date);
+    if(!ex){ex={date:d.date};S.bilans.push(ex);nb++}
+    keys.forEach(k=>{ex[k]=parseFloat(d[k]);nv++});
+  });
+  return [nb,nv];
+}
+function importBilans(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      let txt=String(r.result).replace(/^﻿/,""),list=[];
+      if(/^\s*[\[{]/.test(txt)){
+        const j=JSON.parse(txt);
+        const arr=Array.isArray(j)?j:(j.bilans||[]);
+        arr.forEach(b=>{
+          const d={date:normDate(b.date)};
+          Object.keys(b).forEach(k=>{const m=findMarker(k);if(m&&b[k]!==""&&b[k]!=null)d[m]=parseFloat(String(b[k]).replace(",","."))});
+          list.push(d);
+        });
+      }else{
+        const lines=txt.split(/\r?\n/).filter(x=>x.trim());
+        const sep=lines[0].includes(";")?";":(lines[0].includes("\t")?"\t":",");
+        const head=lines[0].split(sep).map(normKey);
+        const iD=head.indexOf("date"),iC=head.indexOf("code"),iM=head.indexOf("marqueur"),iV=head.indexOf("valeur");
+        if(iD<0||iV<0||(iC<0&&iM<0))throw new Error("format");
+        const by={};
+        lines.slice(1).forEach(l=>{
+          const p=l.split(sep),d=normDate(p[iD]);
+          const m=findMarker(iC>=0?p[iC]:"")||findMarker(iM>=0?p[iM]:"");
+          const v=String(p[iV]||"").replace(",",".").trim();
+          if(!d||!m||v===""||isNaN(v))return;
+          (by[d]=by[d]||{date:d})[m]=parseFloat(v);
+        });
+        list=Object.values(by);
+      }
+      const [nb,nv]=mergeBilans(list);
+      if(!nv){$("impmsg").textContent="Aucune valeur reconnue dans ce fichier. Utilisez le modèle ou un fichier téléchargé ici.";}
+      else{save();renderBilans();$("impmsg").textContent="✔ "+nv+" valeur(s) ajoutée(s) ("+nb+" nouveau(x) bilan(s)).";}
+    }catch(x){$("impmsg").textContent="Fichier non reconnu : utilisez le modèle CSV ou un fichier téléchargé ici."}
+    e.target.value="";
+  };
+  r.readAsText(file);
+}
+
+/* ---------- INIT ---------- */
+initProfil();
+showTab("profil");
+</script>
+</body>
+</html>
